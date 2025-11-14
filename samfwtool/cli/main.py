@@ -12,9 +12,12 @@ from rich import print as rprint
 from samfwtool import __version__
 from samfwtool.core.parser import FirmwareParser
 from samfwtool.core.extractor import FirmwareExtractor
+from samfwtool.core.packer import FirmwarePacker, quick_pack
 from samfwtool.analysis.security import SecurityScanner
 from samfwtool.analysis.diff import FirmwareDiff
 from samfwtool.tools.bootimg import BootImageTool
+from samfwtool.flash.device import DeviceDetector
+from samfwtool.flash.flasher import DeviceFlasher, FlashResult
 
 console = Console()
 
@@ -222,6 +225,182 @@ def bootimg(boot_image, extract_kernel, extract_ramdisk, info):
         if not (info or extract_kernel or extract_ramdisk):
             # Default: show info
             tool.print_info()
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
+@click.option('--output', '-o', type=click.Path(), required=True, help='Output firmware file')
+@click.option('--format', '-f', type=click.Choice(['tar', 'tar.md5']), default='tar.md5', help='Output format')
+def pack(files, output, format):
+    """
+    Pack partitions into firmware file
+
+    Combine multiple partition images into a flashable firmware file.
+    This is a CRITICAL feature missing from Odin (read-only).
+    """
+    console.print(f"\n[bold cyan]Packing firmware[/bold cyan]\n")
+
+    try:
+        from samfwtool.core.parser import FirmwareFormat
+
+        fmt = FirmwareFormat.TAR_MD5 if format == 'tar.md5' else FirmwareFormat.TAR
+        file_paths = [Path(f) for f in files]
+
+        console.print(f"[yellow]Files to pack:[/yellow] {len(file_paths)}")
+        for f in file_paths:
+            console.print(f"  - {f.name} ({f.stat().st_size:,} bytes)")
+
+        packer = FirmwarePacker(output, fmt)
+        packer.add_files(file_paths)
+
+        success = packer.pack()
+
+        if success:
+            console.print(f"\n[bold green]✓ Firmware packed successfully![/bold green]")
+            console.print(f"Output: {output}")
+        else:
+            console.print(f"\n[bold red]✗ Packing failed[/bold red]")
+            sys.exit(1)
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
+@click.option('--mode', type=click.Choice(['adb', 'fastboot', 'download', 'all']), default='all', help='Detection mode')
+def devices(mode):
+    """
+    Detect connected devices
+
+    List all devices connected via ADB, Fastboot, or Samsung Download mode.
+    """
+    console.print(f"\n[bold cyan]Detecting devices...[/bold cyan]\n")
+
+    try:
+        if mode == 'all' or mode == 'adb':
+            adb_devices = DeviceDetector.detect_adb_devices()
+            if adb_devices:
+                console.print(f"[green]ADB Devices ({len(adb_devices)}):[/green]")
+                for dev in adb_devices:
+                    console.print(f"  • {dev.model} - {dev.serial}")
+                    console.print(f"    Bootloader: {'LOCKED' if dev.bootloader_locked else 'UNLOCKED'}")
+
+        if mode == 'all' or mode == 'fastboot':
+            fb_devices = DeviceDetector.detect_fastboot_devices()
+            if fb_devices:
+                console.print(f"\n[green]Fastboot Devices ({len(fb_devices)}):[/green]")
+                for dev in fb_devices:
+                    console.print(f"  • {dev.model} - {dev.serial}")
+
+        if mode == 'all' or mode == 'download':
+            dl_devices = DeviceDetector.detect_samsung_download_mode()
+            if dl_devices:
+                console.print(f"\n[green]Samsung Download Mode ({len(dl_devices)}):[/green]")
+                for dev in dl_devices:
+                    console.print(f"  • {dev.model} - {dev.serial}")
+
+        all_devices = DeviceDetector.detect_all()
+        if not all_devices:
+            console.print("[yellow]No devices detected[/yellow]")
+            console.print("\nTroubleshooting:")
+            console.print("  • Ensure USB debugging is enabled (for ADB)")
+            console.print("  • Check USB cable connection")
+            console.print("  • Install device drivers")
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
+@click.option('--serial', '-s', help='Device serial number')
+@click.option('--partition', '-p', required=True, help='Partition to flash (boot, system, etc.)')
+@click.option('--image', '-i', type=click.Path(exists=True), required=True, help='Image file to flash')
+@click.option('--no-safety-checks', is_flag=True, help='Disable safety checks (DANGEROUS)')
+def flash(serial, partition, image, no_safety_checks):
+    """
+    Flash partition to device
+
+    THIS IS THE ODIN REPLACEMENT - Flash firmware to devices.
+
+    WARNING: Flashing can brick your device if done incorrectly!
+    """
+    console.print(f"\n[bold red]⚠️  DEVICE FLASHING ⚠️[/bold red]\n")
+
+    try:
+        # Detect device
+        devices = DeviceDetector.detect_all()
+        if not devices:
+            console.print("[red]No devices detected[/red]")
+            sys.exit(1)
+
+        # Select device
+        device = None
+        if serial:
+            device = next((d for d in devices if d.serial == serial), None)
+            if not device:
+                console.print(f"[red]Device {serial} not found[/red]")
+                sys.exit(1)
+        else:
+            if len(devices) == 1:
+                device = devices[0]
+            else:
+                console.print("[yellow]Multiple devices detected. Specify with --serial[/yellow]")
+                for d in devices:
+                    console.print(f"  {d.serial}: {d.model}")
+                sys.exit(1)
+
+        # Flash
+        flasher = DeviceFlasher(device, safety_checks=not no_safety_checks)
+        result = flasher.flash_partition(partition, Path(image))
+
+        if result == FlashResult.SUCCESS:
+            console.print(f"\n[bold green]✓ Flash completed successfully![/bold green]")
+        else:
+            console.print(f"\n[bold red]✗ Flash failed: {result.value}[/bold red]")
+            sys.exit(1)
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
+@click.option('--serial', '-s', help='Device serial number')
+@click.option('--partition', '-p', required=True, help='Partition to backup')
+@click.option('--output', '-o', type=click.Path(), required=True, help='Output file')
+def backup(serial, partition, output):
+    """
+    Backup partition from device
+
+    Extract a partition from a connected device for analysis or backup.
+    """
+    console.print(f"\n[bold cyan]Backing up partition[/bold cyan]\n")
+
+    try:
+        devices = DeviceDetector.detect_all()
+        if not devices:
+            console.print("[red]No devices detected[/red]")
+            sys.exit(1)
+
+        device = devices[0] if not serial else next((d for d in devices if d.serial == serial), None)
+        if not device:
+            console.print(f"[red]Device not found[/red]")
+            sys.exit(1)
+
+        flasher = DeviceFlasher(device)
+        success = flasher.backup_partition(partition, Path(output))
+
+        if success:
+            console.print(f"\n[bold green]✓ Backup complete![/bold green]")
+        else:
+            console.print(f"\n[bold red]✗ Backup failed[/bold red]")
+            sys.exit(1)
 
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
