@@ -385,35 +385,63 @@ Required space: ~100 MB
                 install_path.mkdir(parents=True, exist_ok=True)
                 self._install_log(f"✓ Created: {install_path}\n")
 
-                # Step 2: Copy files
+                # Step 2: Copy all project files
                 self._install_log("Copying SamFWTool files...")
                 source_dir = Path(__file__).parent
+
+                # Copy Python files
                 for item in source_dir.rglob('*.py'):
                     if '__pycache__' not in str(item) and 'build' not in str(item):
                         rel_path = item.relative_to(source_dir)
                         dest = install_path / rel_path
                         dest.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(item, dest)
+
+                # Copy setup files and requirements
+                for filename in ['setup.py', 'requirements.txt', 'README.md', 'LICENSE']:
+                    src_file = source_dir / filename
+                    if src_file.exists():
+                        shutil.copy2(src_file, install_path / filename)
+
+                # Copy docs directory if it exists
+                docs_dir = source_dir / 'docs'
+                if docs_dir.exists():
+                    dest_docs = install_path / 'docs'
+                    dest_docs.mkdir(exist_ok=True)
+                    for doc_file in docs_dir.glob('*.md'):
+                        shutil.copy2(doc_file, dest_docs / doc_file.name)
+
                 self._install_log("✓ Files copied\n")
 
-                # Step 3: Install dependencies
+                # Step 3: Install package in editable mode
                 if self.install_deps_var.get():
-                    self._install_log("Installing Python dependencies...")
-                    req_file = source_dir / 'requirements.txt'
-                    if req_file.exists():
-                        result = subprocess.run(
-                            [sys.executable, '-m', 'pip', 'install', '-r', str(req_file)],
-                            capture_output=True,
-                            text=True,
-                            timeout=300
-                        )
-                        if result.returncode == 0:
-                            self._install_log("✓ Dependencies installed\n")
-                            self.dependencies_ok = True
-                        else:
-                            self._install_log(f"✗ Dependency installation failed:\n{result.stderr}\n", error=True)
+                    self._install_log("Installing SamFWTool package...")
+
+                    # Install in editable mode so imports work
+                    result = subprocess.run(
+                        [sys.executable, '-m', 'pip', 'install', '-e', str(install_path)],
+                        capture_output=True,
+                        text=True,
+                        timeout=300
+                    )
+                    if result.returncode == 0:
+                        self._install_log("✓ Package and dependencies installed\n")
+                        self.dependencies_ok = True
                     else:
-                        self._install_log("⚠ requirements.txt not found\n")
+                        self._install_log(f"✗ Package installation failed:\n{result.stderr}\n", error=True)
+                        # Fallback: try installing just requirements
+                        self._install_log("Trying to install dependencies only...")
+                        req_file = install_path / 'requirements.txt'
+                        if req_file.exists():
+                            result2 = subprocess.run(
+                                [sys.executable, '-m', 'pip', 'install', '-r', str(req_file)],
+                                capture_output=True,
+                                text=True,
+                                timeout=300
+                            )
+                            if result2.returncode == 0:
+                                self._install_log("✓ Dependencies installed\n")
+                                self.dependencies_ok = True
 
                 # Step 4: Configure PATH
                 if self.add_to_path_var.get():
@@ -575,15 +603,22 @@ Thank you for choosing SamFWTool!
             desktop = Path.home() / 'Desktop'
 
             if self.system == "Windows":
-                # Windows shortcut
-                import win32com.client
-                shell = win32com.client.Dispatch("WScript.Shell")
-                shortcut = shell.CreateShortCut(str(desktop / "SamFWTool.lnk"))
-                shortcut.Targetpath = sys.executable
-                shortcut.Arguments = f'"{install_path / "samfwtool" / "gui" / "main_gui.py"}"'
-                shortcut.WorkingDirectory = str(install_path)
-                shortcut.IconLocation = sys.executable
-                shortcut.save()
+                # Windows shortcut - requires pywin32
+                try:
+                    import win32com.client
+                    shell = win32com.client.Dispatch("WScript.Shell")
+                    shortcut = shell.CreateShortCut(str(desktop / "SamFWTool.lnk"))
+                    shortcut.Targetpath = sys.executable
+                    shortcut.Arguments = '-m samfwtool.gui.main_gui'
+                    shortcut.WorkingDirectory = str(install_path)
+                    shortcut.IconLocation = sys.executable
+                    shortcut.save()
+                except ImportError:
+                    # Fallback: create a batch file instead
+                    print("pywin32 not available, creating batch file shortcut instead")
+                    batch_file = desktop / "SamFWTool.bat"
+                    batch_file.write_text(f'@echo off\ncd /d "{install_path}"\n{sys.executable} -m samfwtool.gui.main_gui\n')
+                    return True
 
             elif self.system == "Darwin":
                 # macOS .command file
