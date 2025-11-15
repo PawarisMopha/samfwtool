@@ -18,6 +18,9 @@ from samfwtool.analysis.diff import FirmwareDiff
 from samfwtool.tools.bootimg import BootImageTool
 from samfwtool.flash.device import DeviceDetector
 from samfwtool.flash.flasher import DeviceFlasher, FlashResult
+from samfwtool.security.frp import FRPAnalyzer
+from samfwtool.chipsets.mediatek import ScatterFileParser, MTKFlasher
+from samfwtool.chipsets.qualcomm import EDLFlasher, QualcommChipDetector
 
 console = Console()
 
@@ -408,11 +411,105 @@ def backup(serial, partition, output):
 
 
 @cli.command()
+@click.argument('firmware_dir', type=click.Path(exists=True))
+@click.option('--output', '-o', type=click.Path(), help='Output report path (JSON)')
+def frp(firmware_dir, output):
+    """
+    Analyze Factory Reset Protection (FRP)
+
+    UNIQUE FEATURE: No other firmware tool analyzes FRP!
+
+    Detects FRP status, bypass vulnerabilities, and security issues.
+    """
+    console.print(f"\n[bold cyan]FRP Analysis[/bold cyan]\n")
+
+    try:
+        analyzer = FRPAnalyzer(Path(firmware_dir))
+        findings = analyzer.analyze()
+
+        if output:
+            analyzer.export_report(Path(output))
+
+        # Exit code based on findings
+        critical = [f for f in findings if f.severity == 'CRITICAL']
+        if critical:
+            sys.exit(len(critical))
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument('scatter_file', type=click.Path(exists=True))
+@click.option('--firmware-dir', '-f', type=click.Path(exists=True), help='Firmware directory')
+@click.option('--info', is_flag=True, help='Show scatter file info')
+def mtk(scatter_file, firmware_dir, info):
+    """
+    MediaTek (MTK) tools - SP Flash Tool equivalent
+
+    Parse scatter files, analyze MTK firmware, flash MTK devices.
+    ADVANTAGE: Cross-platform, integrated analysis.
+    """
+    console.print(f"\n[bold cyan]MediaTek Tools[/bold cyan]\n")
+
+    try:
+        parser = ScatterFileParser(Path(scatter_file))
+        partitions = parser.parse()
+
+        if info:
+            parser.print_info()
+
+        if firmware_dir:
+            flasher = MTKFlasher(Path(scatter_file), Path(firmware_dir))
+            if flasher.prepare_flash():
+                console.print("\n[green]✓ Firmware validated and ready to flash[/green]")
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
+@click.option('--port', '-p', default='/dev/ttyUSB0', help='EDL port (e.g., /dev/ttyUSB0, COM3)')
+@click.option('--rawprogram', '-r', type=click.Path(exists=True), help='Rawprogram XML file')
+@click.option('--firmware-dir', '-f', type=click.Path(exists=True), help='Firmware directory')
+@click.option('--info', is_flag=True, help='Show device info')
+def edl(port, rawprogram, firmware_dir, info):
+    """
+    Qualcomm EDL tools - QFIL equivalent
+
+    Emergency Download Mode flashing for Qualcomm devices.
+    ADVANTAGE: Cross-platform, open source, better safety checks.
+    """
+    console.print(f"\n[bold cyan]Qualcomm EDL Tools[/bold cyan]\n")
+
+    try:
+        flasher = EDLFlasher(port)
+
+        if not flasher.detect_edl_device():
+            console.print("[red]No EDL device detected[/red]")
+            sys.exit(1)
+
+        if info:
+            device_info = flasher.get_device_info()
+
+        if rawprogram and firmware_dir:
+            flasher.detect_protocol()
+            flasher.flash_firmware(Path(firmware_dir), Path(rawprogram))
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}", style="red")
+        sys.exit(1)
+
+
+@cli.command()
 def compare():
     """
-    Show comparison between SamFWTool and Odin
+    Show comparison between SamFWTool and ALL firmware tools
 
-    Displays a comprehensive feature comparison table.
+    Displays comprehensive feature comparison with Odin, SP Flash,
+    QFIL, and all other major firmware tools.
     """
     console.print("\n[bold cyan]SamFWTool vs Samsung Odin[/bold cyan]\n")
 
