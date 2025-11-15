@@ -46,6 +46,10 @@ setup(
     entry_points={
         "console_scripts": [
             "samfwtool=samfwtool.cli.main:cli",
+            "samfwtool-gui=samfwtool.gui.main_gui:main",
+        ],
+        "gui_scripts": [
+            "samfwtool-gui=samfwtool.gui.main_gui:main",
         ],
     },
 )
