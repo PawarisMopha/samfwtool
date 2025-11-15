@@ -416,6 +416,7 @@ Required space: ~100 MB
                 # Step 3: Install package in editable mode
                 if self.install_deps_var.get():
                     self._install_log("Installing SamFWTool package...")
+                    self._install_log("This may take a few minutes...\n")
 
                     # Install in editable mode so imports work
                     result = subprocess.run(
@@ -424,13 +425,21 @@ Required space: ~100 MB
                         text=True,
                         timeout=300
                     )
+
+                    # Show output to user
+                    if result.stdout:
+                        self._install_log(result.stdout)
+
                     if result.returncode == 0:
                         self._install_log("✓ Package and dependencies installed\n")
                         self.dependencies_ok = True
                     else:
-                        self._install_log(f"✗ Package installation failed:\n{result.stderr}\n", error=True)
+                        self._install_log(f"✗ Package installation failed!\n", error=True)
+                        if result.stderr:
+                            self._install_log(f"Error details:\n{result.stderr}\n", error=True)
+
                         # Fallback: try installing just requirements
-                        self._install_log("Trying to install dependencies only...")
+                        self._install_log("\nTrying alternative: installing dependencies only...\n")
                         req_file = install_path / 'requirements.txt'
                         if req_file.exists():
                             result2 = subprocess.run(
@@ -439,9 +448,19 @@ Required space: ~100 MB
                                 text=True,
                                 timeout=300
                             )
+                            if result2.stdout:
+                                self._install_log(result2.stdout)
+
                             if result2.returncode == 0:
                                 self._install_log("✓ Dependencies installed\n")
-                                self.dependencies_ok = True
+                                self._install_log("⚠ WARNING: Package not installed in editable mode.\n")
+                                self._install_log("⚠ You may need to run: pip install -e \"" + str(install_path) + "\"\n")
+                                self._install_log("⚠ GUI may not work until package is properly installed.\n")
+                                self.dependencies_ok = False  # Mark as failed since full install didn't work
+                            else:
+                                self._install_log("✗ Dependencies installation also failed!\n", error=True)
+                                if result2.stderr:
+                                    self._install_log(f"Error details:\n{result2.stderr}\n", error=True)
 
                 # Step 4: Configure PATH
                 if self.add_to_path_var.get():
@@ -468,13 +487,25 @@ Required space: ~100 MB
 
                 self.install_progress.stop()
                 self._install_log("\n" + "="*50)
-                self._install_log("\n✓ Installation completed successfully!")
-                self._install_log("\nYou can now launch SamFWTool from:")
-                self._install_log(f"  • Desktop shortcut")
-                self._install_log(f"  • Command line: samfwtool")
-                self._install_log(f"  • GUI: samfwtool-gui")
 
-                self.root.after(0, lambda: self.next_btn.config(state='normal'))
+                if self.dependencies_ok:
+                    self._install_log("\n✓ Installation completed successfully!")
+                    self._install_log("\nYou can now launch SamFWTool from:")
+                    self._install_log(f"  • Desktop shortcut")
+                    self._install_log(f"  • Command line: samfwtool")
+                    self._install_log(f"  • GUI: samfwtool-gui")
+                    self.root.after(0, lambda: self.next_btn.config(state='normal'))
+                else:
+                    self._install_log("\n⚠ Installation completed with ERRORS!")
+                    self._install_log("\nThe package was not installed properly.")
+                    self._install_log("\nPlease review the error messages above and:")
+                    self._install_log(f"\n1. Open a command prompt/terminal")
+                    self._install_log(f"2. Run: pip install -e \"{install_path}\"")
+                    self._install_log(f"3. Check for error messages")
+                    self._install_log(f"\nThe GUI cannot launch until the package is installed.")
+                    # Don't enable Next button if installation failed
+                    self.root.after(0, lambda: self.next_btn.config(state='disabled'))
+
                 self.root.after(0, lambda: self.cancel_btn.config(state='normal'))
 
             except Exception as e:
@@ -491,31 +522,30 @@ Required space: ~100 MB
             self._clear_step_frame()
             self.progress['value'] = 100
 
-            # Configure buttons for final screen
-            self.next_btn.config(text="Launch SamFWTool", command=self._launch_app, state='normal')
-            self.back_btn.config(state='disabled')
-            self.cancel_btn.config(text="Close", command=self.root.quit, state='normal')
-
             title_font = tkfont.Font(family="Helvetica", size=16, weight="bold")
-            ttk.Label(
-                self.step_frame,
-                text="🎉 Installation Complete!",
-                font=title_font,
-                foreground='green'
-            ).pack(pady=(20, 10))
 
-            complete_text = f"""
+            if self.dependencies_ok:
+                # Success screen
+                ttk.Label(
+                    self.step_frame,
+                    text="🎉 Installation Complete!",
+                    font=title_font,
+                    foreground='green'
+                ).pack(pady=(20, 10))
+
+                complete_text = f"""
 SamFWTool has been successfully installed!
 
 Installation Summary:
   ✓ Installed to: {self.path_var.get()}
-  {'✓' if self.dependencies_ok else '✗'} Python dependencies installed
+  ✓ Python package installed
   {'✓' if self.path_configured else '✗'} Added to PATH
   {'✓' if self.shortcut_created else '✗'} Desktop shortcut created
 
 You can now use SamFWTool:
 
-• Launch GUI: Double-click desktop icon
+• Launch GUI: Click "Launch SamFWTool" button below
+• Desktop shortcut: Double-click desktop icon
 • Command line: samfwtool --help
 • GUI from terminal: samfwtool-gui
 
@@ -523,7 +553,51 @@ Documentation: See docs/ folder
 Support: https://github.com/samfwtool/samfwtool
 
 Thank you for choosing SamFWTool!
-            """
+                """
+
+                # Enable launch button
+                self.next_btn.config(text="Launch SamFWTool", command=self._launch_app, state='normal')
+            else:
+                # Error screen
+                ttk.Label(
+                    self.step_frame,
+                    text="⚠ Installation Incomplete",
+                    font=title_font,
+                    foreground='orange'
+                ).pack(pady=(20, 10))
+
+                complete_text = f"""
+Installation encountered errors!
+
+Installation Summary:
+  ✓ Files copied to: {self.path_var.get()}
+  ✗ Python package NOT installed properly
+  {'✓' if self.path_configured else '✗'} Added to PATH
+  {'✓' if self.shortcut_created else '✗'} Desktop shortcut created
+
+IMPORTANT: The GUI cannot run until you complete the installation:
+
+1. Open Command Prompt (Windows) or Terminal (Mac/Linux)
+2. Run this command:
+   pip install -e "{self.path_var.get()}"
+
+3. Check for error messages and resolve any issues
+4. Then try launching the GUI
+
+Common issues:
+• Missing README.md file
+• Permission errors
+• Python/pip not in PATH
+
+Need help? Check the installation log above for details.
+                """
+
+                # Disable launch button
+                self.next_btn.config(text="Cannot Launch", command=None, state='disabled')
+
+            # Configure other buttons
+            self.back_btn.config(state='disabled')
+            self.cancel_btn.config(text="Close", command=self.root.quit, state='normal')
 
             text_widget = tk.Text(self.step_frame, height=14, wrap=tk.WORD, relief=tk.FLAT)
             text_widget.pack(fill=tk.X, pady=10)
