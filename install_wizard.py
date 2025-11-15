@@ -152,6 +152,11 @@ Click Next to begin installation.
         text_widget.insert('1.0', welcome_text)
         text_widget.config(state='disabled')
 
+        # Enable Next button, disable Back button
+        self.next_btn.config(state='normal')
+        self.back_btn.config(state='disabled')
+        self.cancel_btn.config(state='normal')
+
         self.current_step = 0
 
     def _show_requirements(self):
@@ -172,6 +177,11 @@ Click Next to begin installation.
 
         self.check_log = scrolledtext.ScrolledText(results_frame, height=15, wrap=tk.WORD)
         self.check_log.pack(fill=tk.BOTH, expand=True)
+
+        # Enable back button, disable next until checks complete
+        self.back_btn.config(state='normal')
+        self.next_btn.config(state='disabled')
+        self.cancel_btn.config(state='normal')
 
         # Run checks
         self._run_requirements_check()
@@ -303,6 +313,10 @@ Required space: ~100 MB
         info_widget.insert('1.0', info_text)
         info_widget.config(state='disabled')
 
+        # Enable Next button for this step
+        self.next_btn.config(state='normal')
+        self.back_btn.config(state='normal')
+
         self.current_step = 2
 
     def _show_installation(self):
@@ -325,15 +339,15 @@ Required space: ~100 MB
         self.install_log = scrolledtext.ScrolledText(self.step_frame, height=15, wrap=tk.WORD)
         self.install_log.pack(fill=tk.BOTH, expand=True)
 
-        # Disable buttons during installation
+        # Disable all buttons during installation
         self.back_btn.config(state='disabled')
         self.next_btn.config(state='disabled')
         self.cancel_btn.config(state='disabled')
 
-        # Run installation
-        self._run_installation()
-
         self.current_step = 3
+
+        # Run installation (must be after setting current_step)
+        self._run_installation()
 
     def _run_installation(self):
         """Run actual installation"""
@@ -460,8 +474,10 @@ Thank you for choosing SamFWTool!
         text_widget.insert('1.0', complete_text)
         text_widget.config(state='disabled')
 
-        # Change button
-        self.next_btn.config(text="Launch SamFWTool", command=self._launch_app)
+        # Configure buttons for final screen
+        self.next_btn.config(text="Launch SamFWTool", command=self._launch_app, state='normal')
+        self.back_btn.config(state='disabled')
+        self.cancel_btn.config(text="Close", command=self.root.quit)
 
         self.current_step = 4
 
@@ -597,7 +613,7 @@ Categories=Development;Utility;
 
         if self.current_step < len(steps):
             steps[self.current_step]()
-            self.back_btn.config(state='normal' if self.current_step > 0 else 'disabled')
+            # Don't override button states here - each step manages its own button states
 
     def _prev_step(self):
         """Go to previous step"""
