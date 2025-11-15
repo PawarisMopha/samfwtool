@@ -79,13 +79,9 @@ class InstallationWizard:
         self.progress = ttk.Progressbar(self.content_frame, mode='determinate', maximum=100)
         self.progress.pack(fill=tk.X, pady=(0, 20))
 
-        # Content area (changes per step)
-        self.step_frame = ttk.Frame(self.content_frame)
-        self.step_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Buttons
+        # Buttons (pack BEFORE content so they're always visible at bottom)
         button_frame = ttk.Frame(self.content_frame)
-        button_frame.pack(fill=tk.X, pady=(10, 0))
+        button_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
 
         self.back_btn = ttk.Button(button_frame, text="< Back", command=self._prev_step, state='disabled')
         self.back_btn.pack(side=tk.LEFT)
@@ -95,6 +91,10 @@ class InstallationWizard:
 
         self.cancel_btn = ttk.Button(button_frame, text="Cancel", command=self._cancel)
         self.cancel_btn.pack(side=tk.RIGHT, padx=(0, 5))
+
+        # Content area (changes per step) - pack AFTER buttons
+        self.step_frame = ttk.Frame(self.content_frame)
+        self.step_frame.pack(fill=tk.BOTH, expand=True)
 
         # Start with welcome step
         self._show_welcome()
@@ -154,7 +154,7 @@ Click Next to begin installation.
             """
 
             text_widget = tk.Text(self.step_frame, height=15, wrap=tk.WORD, relief=tk.FLAT)
-            text_widget.pack(fill=tk.BOTH, expand=True, pady=10)
+            text_widget.pack(fill=tk.X, pady=10)
             text_widget.insert('1.0', welcome_text)
             text_widget.config(state='disabled')
 
@@ -328,8 +328,8 @@ Estimated time: 2-5 minutes
 Required space: ~100 MB
             """
 
-            info_widget = tk.Text(self.step_frame, height=10, wrap=tk.WORD, relief=tk.FLAT)
-            info_widget.pack(fill=tk.BOTH, expand=True, pady=10)
+            info_widget = tk.Text(self.step_frame, height=8, wrap=tk.WORD, relief=tk.FLAT)
+            info_widget.pack(fill=tk.X, pady=10)
             info_widget.insert('1.0', info_text)
             info_widget.config(state='disabled')
 
@@ -497,8 +497,8 @@ Support: https://github.com/samfwtool/samfwtool
 Thank you for choosing SamFWTool!
             """
 
-            text_widget = tk.Text(self.step_frame, height=18, wrap=tk.WORD, relief=tk.FLAT)
-            text_widget.pack(fill=tk.BOTH, expand=True, pady=10)
+            text_widget = tk.Text(self.step_frame, height=14, wrap=tk.WORD, relief=tk.FLAT)
+            text_widget.pack(fill=tk.X, pady=10)
             text_widget.insert('1.0', complete_text)
             text_widget.config(state='disabled')
 
