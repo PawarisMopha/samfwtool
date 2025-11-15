@@ -115,17 +115,23 @@ class InstallationWizard:
 
     def _show_welcome(self):
         """Show welcome screen"""
-        self._clear_step_frame()
-        self.progress['value'] = 0
+        try:
+            self._clear_step_frame()
+            self.progress['value'] = 0
 
-        title_font = tkfont.Font(family="Helvetica", size=16, weight="bold")
-        ttk.Label(
-            self.step_frame,
-            text="Welcome to SamFWTool!",
-            font=title_font
-        ).pack(pady=(20, 10))
+            # Enable Next button, disable Back button
+            self.next_btn.config(state='normal')
+            self.back_btn.config(state='disabled')
+            self.cancel_btn.config(state='normal')
 
-        welcome_text = """
+            title_font = tkfont.Font(family="Helvetica", size=16, weight="bold")
+            ttk.Label(
+                self.step_frame,
+                text="Welcome to SamFWTool!",
+                font=title_font
+            ).pack(pady=(20, 10))
+
+            welcome_text = """
 SamFWTool is the ULTIMATE universal firmware toolkit that surpasses
 ALL competitors: Odin, SP Flash Tool, QFIL, and more!
 
@@ -145,48 +151,56 @@ This wizard will:
 5. Set up one-click launcher
 
 Click Next to begin installation.
-        """
+            """
 
-        text_widget = tk.Text(self.step_frame, height=15, wrap=tk.WORD, relief=tk.FLAT)
-        text_widget.pack(fill=tk.BOTH, expand=True, pady=10)
-        text_widget.insert('1.0', welcome_text)
-        text_widget.config(state='disabled')
+            text_widget = tk.Text(self.step_frame, height=15, wrap=tk.WORD, relief=tk.FLAT)
+            text_widget.pack(fill=tk.BOTH, expand=True, pady=10)
+            text_widget.insert('1.0', welcome_text)
+            text_widget.config(state='disabled')
 
-        # Enable Next button, disable Back button
-        self.next_btn.config(state='normal')
-        self.back_btn.config(state='disabled')
-        self.cancel_btn.config(state='normal')
+            self.current_step = 0
 
-        self.current_step = 0
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to show welcome screen: {e}")
+            print(f"Error in _show_welcome: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _show_requirements(self):
         """Show requirements check"""
-        self._clear_step_frame()
-        self.progress['value'] = 20
+        try:
+            self._clear_step_frame()
+            self.progress['value'] = 20
 
-        title_font = tkfont.Font(family="Helvetica", size=14, weight="bold")
-        ttk.Label(
-            self.step_frame,
-            text="Checking System Requirements",
-            font=title_font
-        ).pack(pady=(10, 20))
+            # Enable back button, disable next until checks complete
+            self.back_btn.config(state='normal')
+            self.next_btn.config(state='disabled')
+            self.cancel_btn.config(state='normal')
 
-        # Results frame
-        results_frame = ttk.Frame(self.step_frame)
-        results_frame.pack(fill=tk.BOTH, expand=True)
+            title_font = tkfont.Font(family="Helvetica", size=14, weight="bold")
+            ttk.Label(
+                self.step_frame,
+                text="Checking System Requirements",
+                font=title_font
+            ).pack(pady=(10, 20))
 
-        self.check_log = scrolledtext.ScrolledText(results_frame, height=15, wrap=tk.WORD)
-        self.check_log.pack(fill=tk.BOTH, expand=True)
+            # Results frame
+            results_frame = ttk.Frame(self.step_frame)
+            results_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Enable back button, disable next until checks complete
-        self.back_btn.config(state='normal')
-        self.next_btn.config(state='disabled')
-        self.cancel_btn.config(state='normal')
+            self.check_log = scrolledtext.ScrolledText(results_frame, height=15, wrap=tk.WORD)
+            self.check_log.pack(fill=tk.BOTH, expand=True)
 
-        # Run checks
-        self._run_requirements_check()
+            # Run checks
+            self._run_requirements_check()
 
-        self.current_step = 1
+            self.current_step = 1
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to show requirements screen: {e}")
+            print(f"Error in _show_requirements: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _run_requirements_check(self):
         """Run requirements check"""
@@ -252,51 +266,57 @@ Click Next to begin installation.
 
     def _show_installation_path(self):
         """Show installation path selection"""
-        self._clear_step_frame()
-        self.progress['value'] = 40
+        try:
+            self._clear_step_frame()
+            self.progress['value'] = 40
 
-        title_font = tkfont.Font(family="Helvetica", size=14, weight="bold")
-        ttk.Label(
-            self.step_frame,
-            text="Select Installation Path",
-            font=title_font
-        ).pack(pady=(10, 20))
+            # Enable buttons FIRST to ensure they're always enabled on this screen
+            self.next_btn.config(state='normal')
+            self.back_btn.config(state='normal')
+            self.cancel_btn.config(state='normal')
 
-        # Path selection
-        path_frame = ttk.LabelFrame(self.step_frame, text="Installation Directory", padding=10)
-        path_frame.pack(fill=tk.X, pady=10)
+            title_font = tkfont.Font(family="Helvetica", size=14, weight="bold")
+            ttk.Label(
+                self.step_frame,
+                text="Select Installation Path",
+                font=title_font
+            ).pack(pady=(10, 20))
 
-        self.path_var = tk.StringVar(value=str(self.install_path))
-        ttk.Entry(path_frame, textvariable=self.path_var, width=50).pack(side=tk.LEFT, padx=5)
-        ttk.Button(path_frame, text="Browse...", command=self._browse_install_path).pack(side=tk.LEFT)
+            # Path selection
+            path_frame = ttk.LabelFrame(self.step_frame, text="Installation Directory", padding=10)
+            path_frame.pack(fill=tk.X, pady=10)
 
-        # Options
-        options_frame = ttk.LabelFrame(self.step_frame, text="Installation Options", padding=10)
-        options_frame.pack(fill=tk.X, pady=10)
+            self.path_var = tk.StringVar(value=str(self.install_path))
+            ttk.Entry(path_frame, textvariable=self.path_var, width=50).pack(side=tk.LEFT, padx=5)
+            ttk.Button(path_frame, text="Browse...", command=self._browse_install_path).pack(side=tk.LEFT)
 
-        self.add_to_path_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(
-            options_frame,
-            text="Add to PATH (recommended)",
-            variable=self.add_to_path_var
-        ).pack(anchor=tk.W, pady=2)
+            # Options
+            options_frame = ttk.LabelFrame(self.step_frame, text="Installation Options", padding=10)
+            options_frame.pack(fill=tk.X, pady=10)
 
-        self.create_shortcut_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(
-            options_frame,
-            text="Create desktop shortcut",
-            variable=self.create_shortcut_var
-        ).pack(anchor=tk.W, pady=2)
+            self.add_to_path_var = tk.BooleanVar(value=True)
+            ttk.Checkbutton(
+                options_frame,
+                text="Add to PATH (recommended)",
+                variable=self.add_to_path_var
+            ).pack(anchor=tk.W, pady=2)
 
-        self.install_deps_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(
-            options_frame,
-            text="Install Python dependencies",
-            variable=self.install_deps_var
-        ).pack(anchor=tk.W, pady=2)
+            self.create_shortcut_var = tk.BooleanVar(value=True)
+            ttk.Checkbutton(
+                options_frame,
+                text="Create desktop shortcut",
+                variable=self.create_shortcut_var
+            ).pack(anchor=tk.W, pady=2)
 
-        # Info
-        info_text = f"""
+            self.install_deps_var = tk.BooleanVar(value=True)
+            ttk.Checkbutton(
+                options_frame,
+                text="Install Python dependencies",
+                variable=self.install_deps_var
+            ).pack(anchor=tk.W, pady=2)
+
+            # Info
+            info_text = f"""
 Installation will:
 • Copy SamFWTool to: {self.install_path}
 • Install required Python packages
@@ -306,18 +326,20 @@ Installation will:
 
 Estimated time: 2-5 minutes
 Required space: ~100 MB
-        """
+            """
 
-        info_widget = tk.Text(self.step_frame, height=10, wrap=tk.WORD, relief=tk.FLAT)
-        info_widget.pack(fill=tk.BOTH, expand=True, pady=10)
-        info_widget.insert('1.0', info_text)
-        info_widget.config(state='disabled')
+            info_widget = tk.Text(self.step_frame, height=10, wrap=tk.WORD, relief=tk.FLAT)
+            info_widget.pack(fill=tk.BOTH, expand=True, pady=10)
+            info_widget.insert('1.0', info_text)
+            info_widget.config(state='disabled')
 
-        # Enable Next button for this step
-        self.next_btn.config(state='normal')
-        self.back_btn.config(state='normal')
+            self.current_step = 2
 
-        self.current_step = 2
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to show installation path screen: {e}")
+            print(f"Error in _show_installation_path: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _show_installation(self):
         """Show installation progress"""
@@ -437,18 +459,24 @@ Required space: ~100 MB
 
     def _show_complete(self):
         """Show completion screen"""
-        self._clear_step_frame()
-        self.progress['value'] = 100
+        try:
+            self._clear_step_frame()
+            self.progress['value'] = 100
 
-        title_font = tkfont.Font(family="Helvetica", size=16, weight="bold")
-        ttk.Label(
-            self.step_frame,
-            text="🎉 Installation Complete!",
-            font=title_font,
-            foreground='green'
-        ).pack(pady=(20, 10))
+            # Configure buttons for final screen
+            self.next_btn.config(text="Launch SamFWTool", command=self._launch_app, state='normal')
+            self.back_btn.config(state='disabled')
+            self.cancel_btn.config(text="Close", command=self.root.quit, state='normal')
 
-        complete_text = f"""
+            title_font = tkfont.Font(family="Helvetica", size=16, weight="bold")
+            ttk.Label(
+                self.step_frame,
+                text="🎉 Installation Complete!",
+                font=title_font,
+                foreground='green'
+            ).pack(pady=(20, 10))
+
+            complete_text = f"""
 SamFWTool has been successfully installed!
 
 Installation Summary:
@@ -467,19 +495,20 @@ Documentation: See docs/ folder
 Support: https://github.com/samfwtool/samfwtool
 
 Thank you for choosing SamFWTool!
-        """
+            """
 
-        text_widget = tk.Text(self.step_frame, height=18, wrap=tk.WORD, relief=tk.FLAT)
-        text_widget.pack(fill=tk.BOTH, expand=True, pady=10)
-        text_widget.insert('1.0', complete_text)
-        text_widget.config(state='disabled')
+            text_widget = tk.Text(self.step_frame, height=18, wrap=tk.WORD, relief=tk.FLAT)
+            text_widget.pack(fill=tk.BOTH, expand=True, pady=10)
+            text_widget.insert('1.0', complete_text)
+            text_widget.config(state='disabled')
 
-        # Configure buttons for final screen
-        self.next_btn.config(text="Launch SamFWTool", command=self._launch_app, state='normal')
-        self.back_btn.config(state='disabled')
-        self.cancel_btn.config(text="Close", command=self.root.quit)
+            self.current_step = 4
 
-        self.current_step = 4
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to show completion screen: {e}")
+            print(f"Error in _show_complete: {e}")
+            import traceback
+            traceback.print_exc()
 
     # Helper methods
     def _log(self, message, error=False):
