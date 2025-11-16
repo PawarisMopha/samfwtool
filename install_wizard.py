@@ -265,7 +265,7 @@ Click Next to begin installation.
             self.next_btn.config(state='disabled')
 
     def _show_installation_path(self):
-        """Show installation path selection"""
+        """Show installation options"""
         try:
             self._clear_step_frame()
             self.progress['value'] = 40
@@ -278,57 +278,46 @@ Click Next to begin installation.
             title_font = tkfont.Font(family="Helvetica", size=14, weight="bold")
             ttk.Label(
                 self.step_frame,
-                text="Select Installation Path",
+                text="Installation Options",
                 font=title_font
             ).pack(pady=(10, 20))
-
-            # Path selection
-            path_frame = ttk.LabelFrame(self.step_frame, text="Installation Directory", padding=10)
-            path_frame.pack(fill=tk.X, pady=10)
-
-            self.path_var = tk.StringVar(value=str(self.install_path))
-            ttk.Entry(path_frame, textvariable=self.path_var, width=50).pack(side=tk.LEFT, padx=5)
-            ttk.Button(path_frame, text="Browse...", command=self._browse_install_path).pack(side=tk.LEFT)
 
             # Options
             options_frame = ttk.LabelFrame(self.step_frame, text="Installation Options", padding=10)
             options_frame.pack(fill=tk.X, pady=10)
-
-            self.add_to_path_var = tk.BooleanVar(value=True)
-            ttk.Checkbutton(
-                options_frame,
-                text="Add to PATH (recommended)",
-                variable=self.add_to_path_var
-            ).pack(anchor=tk.W, pady=2)
 
             self.create_shortcut_var = tk.BooleanVar(value=True)
             ttk.Checkbutton(
                 options_frame,
                 text="Create desktop shortcut",
                 variable=self.create_shortcut_var
-            ).pack(anchor=tk.W, pady=2)
+            ).pack(anchor=tk.W, pady=5)
 
             self.install_deps_var = tk.BooleanVar(value=True)
             ttk.Checkbutton(
                 options_frame,
-                text="Install Python dependencies",
+                text="Install package and dependencies (recommended)",
                 variable=self.install_deps_var
-            ).pack(anchor=tk.W, pady=2)
+            ).pack(anchor=tk.W, pady=5)
 
             # Info
+            source_dir = Path(__file__).parent
             info_text = f"""
-Installation will:
-• Copy SamFWTool to: {self.install_path}
-• Install required Python packages
-• Configure system PATH
-• Create desktop shortcuts
-• Set up one-click launcher
+Installation Process:
+
+• Package will be installed to Python's site-packages directory
+• All dependencies will be downloaded from PyPI
+• Command-line tools will be available system-wide:
+  - samfwtool (CLI)
+  - samfwtool-gui (GUI)
+
+Installing from: {source_dir}
 
 Estimated time: 2-5 minutes
-Required space: ~100 MB
+Internet connection required for downloading dependencies.
             """
 
-            info_widget = tk.Text(self.step_frame, height=8, wrap=tk.WORD, relief=tk.FLAT)
+            info_widget = tk.Text(self.step_frame, height=12, wrap=tk.WORD, relief=tk.FLAT)
             info_widget.pack(fill=tk.X, pady=10)
             info_widget.insert('1.0', info_text)
             info_widget.config(state='disabled')
@@ -336,7 +325,7 @@ Required space: ~100 MB
             self.current_step = 2
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to show installation path screen: {e}")
+            messagebox.showerror("Error", f"Failed to show installation options screen: {e}")
             print(f"Error in _show_installation_path: {e}")
             import traceback
             traceback.print_exc()
@@ -379,70 +368,19 @@ Required space: ~100 MB
             try:
                 self.install_progress.start()
 
-                # Step 1: Create installation directory
-                self._install_log("Creating installation directory...")
-                install_path = Path(self.path_var.get())
-                install_path.mkdir(parents=True, exist_ok=True)
-                self._install_log(f"✓ Created: {install_path}\n")
-
-                # Step 2: Copy all project files
-                self._install_log("Copying SamFWTool files...")
+                # Get source directory (where this script is running from)
                 source_dir = Path(__file__).parent
+                self._install_log(f"Installing from: {source_dir}\n")
 
-                # Copy Python files
-                for item in source_dir.rglob('*.py'):
-                    if '__pycache__' not in str(item) and 'build' not in str(item):
-                        rel_path = item.relative_to(source_dir)
-                        dest = install_path / rel_path
-                        dest.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copy2(item, dest)
-
-                # Copy setup files and requirements
-                critical_files = []
-                for filename in ['setup.py', 'requirements.txt', 'README.md', 'LICENSE']:
-                    src_file = source_dir / filename
-                    if src_file.exists():
-                        shutil.copy2(src_file, install_path / filename)
-                        if filename == 'setup.py':
-                            critical_files.append(filename)
-                        self._install_log(f"  ✓ Copied {filename}")
-                    else:
-                        self._install_log(f"  ⚠ Skipped {filename} (not found)")
-
-                # Copy docs directory if it exists
-                docs_dir = source_dir / 'docs'
-                if docs_dir.exists():
-                    dest_docs = install_path / 'docs'
-                    dest_docs.mkdir(exist_ok=True)
-                    for doc_file in docs_dir.glob('*.md'):
-                        shutil.copy2(doc_file, dest_docs / doc_file.name)
-                    self._install_log(f"  ✓ Copied docs directory")
-
-                self._install_log("✓ Files copied\n")
-
-                # Verify critical files exist
-                setup_py = install_path / 'setup.py'
-                if not setup_py.exists():
-                    self._install_log("✗ CRITICAL: setup.py not found in installation directory!", error=True)
-                    self._install_log(f"✗ Cannot proceed with package installation\n", error=True)
-                    self.dependencies_ok = False
-                    self.install_progress.stop()
-                    self.root.after(0, lambda: self.next_btn.config(state='disabled'))
-                    self.root.after(0, lambda: self.cancel_btn.config(state='normal'))
-                    return
-                else:
-                    self._install_log(f"✓ Verified setup.py exists: {setup_py}\n")
-
-                # Step 3: Install package in editable mode
+                # Step 1: Install package directly from source
                 if self.install_deps_var.get():
-                    self._install_log("Installing SamFWTool package...")
+                    self._install_log("Installing SamFWTool package and dependencies...")
                     self._install_log("This may take a few minutes...\n")
 
-                    # Show the command being run
-                    install_cmd = [sys.executable, '-m', 'pip', 'install', '-e', str(install_path)]
+                    # Install directly from source directory - this is the standard way
+                    install_cmd = [sys.executable, '-m', 'pip', 'install', str(source_dir)]
                     self._install_log(f"Running: {' '.join(install_cmd)}\n")
 
-                    # Install in editable mode so imports work
                     result = subprocess.run(
                         install_cmd,
                         capture_output=True,
@@ -455,79 +393,42 @@ Required space: ~100 MB
                         self._install_log(result.stdout)
 
                     if result.returncode == 0:
-                        self._install_log("✓ Package and dependencies installed\n")
+                        self._install_log("\n✓ Package and all dependencies installed successfully!\n")
                         self.dependencies_ok = True
                     else:
-                        self._install_log(f"✗ Package installation failed!\n", error=True)
+                        self._install_log(f"\n✗ Package installation failed!\n", error=True)
                         if result.stderr:
                             self._install_log(f"Error details:\n{result.stderr}\n", error=True)
+                        self.dependencies_ok = False
 
-                        # Fallback: try installing just requirements
-                        self._install_log("\nTrying alternative: installing dependencies only...\n")
-                        req_file = install_path / 'requirements.txt'
-                        if req_file.exists():
-                            result2 = subprocess.run(
-                                [sys.executable, '-m', 'pip', 'install', '-r', str(req_file)],
-                                capture_output=True,
-                                text=True,
-                                timeout=300
-                            )
-                            if result2.stdout:
-                                self._install_log(result2.stdout)
-
-                            if result2.returncode == 0:
-                                self._install_log("✓ Dependencies installed\n")
-                                self._install_log("⚠ WARNING: Package not installed in editable mode.\n")
-                                self._install_log("⚠ You may need to run: pip install -e \"" + str(install_path) + "\"\n")
-                                self._install_log("⚠ GUI may not work until package is properly installed.\n")
-                                self.dependencies_ok = False  # Mark as failed since full install didn't work
-                            else:
-                                self._install_log("✗ Dependencies installation also failed!\n", error=True)
-                                if result2.stderr:
-                                    self._install_log(f"Error details:\n{result2.stderr}\n", error=True)
-
-                # Step 4: Configure PATH
-                if self.add_to_path_var.get():
-                    self._install_log("Configuring PATH...")
-                    if self._add_to_path(install_path):
-                        self._install_log("✓ Added to PATH\n")
-                        self.path_configured = True
-                    else:
-                        self._install_log("✗ Failed to add to PATH\n", error=True)
-
-                # Step 5: Create desktop shortcut
-                if self.create_shortcut_var.get():
-                    self._install_log("Creating desktop shortcut...")
-                    if self._create_desktop_shortcut(install_path):
+                # Step 2: Create desktop shortcut
+                if self.create_shortcut_var.get() and self.dependencies_ok:
+                    self._install_log("\nCreating desktop shortcut...")
+                    if self._create_desktop_shortcut():
                         self._install_log("✓ Desktop shortcut created\n")
                         self.shortcut_created = True
                     else:
-                        self._install_log("✗ Failed to create shortcut\n", error=True)
-
-                # Step 6: Create launcher
-                self._install_log("Creating launcher scripts...")
-                self._create_launcher(install_path)
-                self._install_log("✓ Launcher created\n")
+                        self._install_log("⚠ Could not create desktop shortcut\n")
 
                 self.install_progress.stop()
                 self._install_log("\n" + "="*50)
 
                 if self.dependencies_ok:
                     self._install_log("\n✓ Installation completed successfully!")
-                    self._install_log("\nYou can now launch SamFWTool from:")
-                    self._install_log(f"  • Desktop shortcut")
+                    self._install_log("\nSamFWTool is now installed and ready to use!")
+                    self._install_log("\nYou can launch it from:")
+                    self._install_log(f"  • Desktop shortcut (if created)")
                     self._install_log(f"  • Command line: samfwtool")
                     self._install_log(f"  • GUI: samfwtool-gui")
+                    self._install_log(f"\nPackage installed to Python site-packages.")
                     self.root.after(0, lambda: self.next_btn.config(state='normal'))
                 else:
-                    self._install_log("\n⚠ Installation completed with ERRORS!")
-                    self._install_log("\nThe package was not installed properly.")
-                    self._install_log("\nPlease review the error messages above and:")
-                    self._install_log(f"\n1. Open a command prompt/terminal")
-                    self._install_log(f"2. Run: pip install -e \"{install_path}\"")
-                    self._install_log(f"3. Check for error messages")
-                    self._install_log(f"\nThe GUI cannot launch until the package is installed.")
-                    # Don't enable Next button if installation failed
+                    self._install_log("\n✗ Installation FAILED!")
+                    self._install_log("\nPlease review the error messages above.")
+                    self._install_log("\nCommon solutions:")
+                    self._install_log(f"  • Make sure you have internet connection (to download dependencies)")
+                    self._install_log(f"  • Try running as administrator/with sudo")
+                    self._install_log(f"  • Check that Python and pip are properly installed")
                     self.root.after(0, lambda: self.next_btn.config(state='disabled'))
 
                 self.root.after(0, lambda: self.cancel_btn.config(state='normal'))
@@ -561,21 +462,20 @@ Required space: ~100 MB
 SamFWTool has been successfully installed!
 
 Installation Summary:
-  ✓ Installed to: {self.path_var.get()}
-  ✓ Python package installed
-  {'✓' if self.path_configured else '✗'} Added to PATH
+  ✓ Package installed to Python site-packages
+  ✓ Entry points created (samfwtool, samfwtool-gui)
   {'✓' if self.shortcut_created else '✗'} Desktop shortcut created
 
 You can now use SamFWTool:
 
 • Launch GUI: Click "Launch SamFWTool" button below
-• Desktop shortcut: Double-click desktop icon
+• Desktop shortcut: Double-click desktop icon (if created)
 • Command line: samfwtool --help
 • GUI from terminal: samfwtool-gui
 
-Documentation: See docs/ folder
-Support: https://github.com/samfwtool/samfwtool
+The package is installed system-wide and available from any directory.
 
+Documentation: https://github.com/samfwtool/samfwtool
 Thank you for choosing SamFWTool!
                 """
 
@@ -590,30 +490,24 @@ Thank you for choosing SamFWTool!
                     foreground='orange'
                 ).pack(pady=(20, 10))
 
-                complete_text = f"""
+                complete_text = """
 Installation encountered errors!
 
 Installation Summary:
-  ✓ Files copied to: {self.path_var.get()}
-  ✗ Python package NOT installed properly
-  {'✓' if self.path_configured else '✗'} Added to PATH
-  {'✓' if self.shortcut_created else '✗'} Desktop shortcut created
+  ✗ Python package NOT installed
 
-IMPORTANT: The GUI cannot run until you complete the installation:
+The package installation failed. Please check the error messages above.
 
-1. Open Command Prompt (Windows) or Terminal (Mac/Linux)
-2. Run this command:
-   pip install -e "{self.path_var.get()}"
-
-3. Check for error messages and resolve any issues
-4. Then try launching the GUI
+To install manually, run this command from the source directory:
+  pip install .
 
 Common issues:
-• Missing README.md file
-• Permission errors
-• Python/pip not in PATH
+• No internet connection (can't download dependencies)
+• Permission denied (try running as administrator)
+• Python/pip not properly configured
+• Conflicting package versions
 
-Need help? Check the installation log above for details.
+Need help? Check the installation log above for detailed error messages.
                 """
 
                 # Disable launch button
@@ -695,34 +589,23 @@ Need help? Check the installation log above for details.
             print(f"Error adding to PATH: {e}")
             return False
 
-    def _create_desktop_shortcut(self, install_path):
+    def _create_desktop_shortcut(self):
         """Create desktop shortcut"""
         try:
             desktop = Path.home() / 'Desktop'
 
             if self.system == "Windows":
-                # Windows shortcut - requires pywin32
-                try:
-                    import win32com.client
-                    shell = win32com.client.Dispatch("WScript.Shell")
-                    shortcut = shell.CreateShortCut(str(desktop / "SamFWTool.lnk"))
-                    shortcut.Targetpath = sys.executable
-                    shortcut.Arguments = '-m samfwtool.gui.main_gui'
-                    shortcut.WorkingDirectory = str(install_path)
-                    shortcut.IconLocation = sys.executable
-                    shortcut.save()
-                except ImportError:
-                    # Fallback: create a batch file instead
-                    print("pywin32 not available, creating batch file shortcut instead")
-                    batch_file = desktop / "SamFWTool.bat"
-                    batch_file.write_text(f'@echo off\ncd /d "{install_path}"\n{sys.executable} -m samfwtool.gui.main_gui\n')
-                    return True
+                # Windows: Create batch file shortcut
+                batch_file = desktop / "SamFWTool.bat"
+                batch_file.write_text(f'@echo off\n"{sys.executable}" -m samfwtool.gui.main_gui\npause\n')
+                return True
 
             elif self.system == "Darwin":
                 # macOS .command file
                 launcher = desktop / "SamFWTool.command"
-                launcher.write_text(f'#!/bin/bash\ncd "{install_path}"\n{sys.executable} -m samfwtool.gui.main_gui\n')
+                launcher.write_text(f'#!/bin/bash\n"{sys.executable}" -m samfwtool.gui.main_gui\n')
                 launcher.chmod(0o755)
+                return True
 
             else:
                 # Linux .desktop file
@@ -732,13 +615,11 @@ Type=Application
 Name=SamFWTool
 Comment=Universal Firmware Toolkit
 Exec={sys.executable} -m samfwtool.gui.main_gui
-Icon={install_path}/icon.png
 Terminal=false
 Categories=Development;Utility;
 """)
                 desktop_file.chmod(0o755)
-
-            return True
+                return True
 
         except Exception as e:
             print(f"Error creating shortcut: {e}")
@@ -791,14 +672,9 @@ Categories=Development;Utility;
     def _launch_app(self):
         """Launch application"""
         try:
-            install_path = Path(self.path_var.get())
-            gui_script = install_path / "samfwtool" / "gui" / "main_gui.py"
-
-            if gui_script.exists():
-                subprocess.Popen([sys.executable, str(gui_script)])
-                self.root.quit()
-            else:
-                messagebox.showerror("Error", "GUI script not found")
+            # Launch using the installed entry point
+            subprocess.Popen([sys.executable, '-m', 'samfwtool.gui.main_gui'])
+            self.root.quit()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to launch: {e}")
 
