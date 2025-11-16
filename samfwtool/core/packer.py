@@ -1,16 +1,24 @@
 """
 Firmware packing and repacking engine
 Allows creating firmware files from extracted partitions
+
+Author: SamFWTool Team
+License: MIT
 """
 import os
 import tarfile
 import hashlib
 import struct
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from tqdm import tqdm
 
 from samfwtool.core.parser import FirmwareFormat
+
+__all__ = [
+    "FirmwarePacker",
+    "quick_pack",
+]
 
 
 class FirmwarePacker:
@@ -31,9 +39,9 @@ class FirmwarePacker:
     def __init__(self, output_path: str, format: FirmwareFormat = FirmwareFormat.TAR_MD5):
         self.output_path = Path(output_path)
         self.format = format
-        self.files_to_pack: List[Path] = []
+        self.files_to_pack: List[Tuple[Path, str]] = []
 
-    def add_file(self, file_path: Path, archive_name: Optional[str] = None):
+    def add_file(self, file_path: Path, archive_name: Optional[str] = None) -> None:
         """Add a file to be packed"""
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")

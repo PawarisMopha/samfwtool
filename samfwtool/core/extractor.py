@@ -1,6 +1,9 @@
 """
 Advanced firmware extraction engine
 Extracts and unpacks firmware files from multiple formats
+
+Author: SamFWTool Team
+License: MIT
 """
 import os
 import tarfile
@@ -15,6 +18,10 @@ from typing import Optional, Callable
 from tqdm import tqdm
 
 from samfwtool.core.parser import FirmwareParser, FirmwareFormat, PartitionInfo
+
+__all__ = [
+    "FirmwareExtractor",
+]
 
 
 class FirmwareExtractor:
@@ -299,38 +306,63 @@ class FirmwareExtractor:
 
         decompressed_path = None
 
-        # Detect compression
-        if header.startswith(b'\x1f\x8b'):  # gzip
-            print(f"  Decompressing (gzip): {file_path.name}")
-            decompressed_path = file_path.with_suffix('')
-            with gzip.open(file_path, 'rb') as src:
-                with open(decompressed_path, 'wb') as dst:
-                    dst.write(src.read())
-            file_path.unlink()  # Remove compressed file
+        # Detect compression and decompress with proper error handling
+        try:
+            if header.startswith(b'\x1f\x8b'):  # gzip
+                print(f"  Decompressing (gzip): {file_path.name}")
+                decompressed_path = file_path.with_suffix('')
+                with gzip.open(file_path, 'rb') as src:
+                    with open(decompressed_path, 'wb') as dst:
+                        dst.write(src.read())
+                # Only delete original if decompression succeeded and output exists
+                if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
+                    file_path.unlink()
+                else:
+                    raise IOError(f"Decompression failed: output file is empty or missing")
 
-        elif header.startswith(b'\x42\x5a'):  # bzip2
-            print(f"  Decompressing (bzip2): {file_path.name}")
-            decompressed_path = file_path.with_suffix('')
-            with bz2.open(file_path, 'rb') as src:
-                with open(decompressed_path, 'wb') as dst:
-                    dst.write(src.read())
-            file_path.unlink()
+            elif header.startswith(b'\x42\x5a'):  # bzip2
+                print(f"  Decompressing (bzip2): {file_path.name}")
+                decompressed_path = file_path.with_suffix('')
+                with bz2.open(file_path, 'rb') as src:
+                    with open(decompressed_path, 'wb') as dst:
+                        dst.write(src.read())
+                # Only delete original if decompression succeeded
+                if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
+                    file_path.unlink()
+                else:
+                    raise IOError(f"Decompression failed: output file is empty or missing")
 
-        elif header.startswith(b'\xfd\x37\x7a\x58\x5a'):  # xz
-            print(f"  Decompressing (xz): {file_path.name}")
-            decompressed_path = file_path.with_suffix('')
-            with lzma.open(file_path, 'rb') as src:
-                with open(decompressed_path, 'wb') as dst:
-                    dst.write(src.read())
-            file_path.unlink()
+            elif header.startswith(b'\xfd\x37\x7a\x58\x5a'):  # xz
+                print(f"  Decompressing (xz): {file_path.name}")
+                decompressed_path = file_path.with_suffix('')
+                with lzma.open(file_path, 'rb') as src:
+                    with open(decompressed_path, 'wb') as dst:
+                        dst.write(src.read())
+                # Only delete original if decompression succeeded
+                if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
+                    file_path.unlink()
+                else:
+                    raise IOError(f"Decompression failed: output file is empty or missing")
 
-        elif header.startswith(b'\x04\x22\x4d\x18'):  # lz4
-            print(f"  Decompressing (lz4): {file_path.name}")
-            decompressed_path = file_path.with_suffix('')
-            with lz4.frame.open(file_path, 'rb') as src:
-                with open(decompressed_path, 'wb') as dst:
-                    dst.write(src.read())
-            file_path.unlink()
+            elif header.startswith(b'\x04\x22\x4d\x18'):  # lz4
+                print(f"  Decompressing (lz4): {file_path.name}")
+                decompressed_path = file_path.with_suffix('')
+                with lz4.frame.open(file_path, 'rb') as src:
+                    with open(decompressed_path, 'wb') as dst:
+                        dst.write(src.read())
+                # Only delete original if decompression succeeded
+                if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
+                    file_path.unlink()
+                else:
+                    raise IOError(f"Decompression failed: output file is empty or missing")
+
+        except (IOError, OSError, gzip.BadGzipFile, lzma.LZMAError) as e:
+            print(f"  Warning: Decompression failed for {file_path.name}: {e}")
+            # Clean up failed decompression output if it exists
+            if decompressed_path and decompressed_path.exists():
+                decompressed_path.unlink()
+            # Return original file path since decompression failed
+            return file_path
 
         return decompressed_path if decompressed_path else file_path
 

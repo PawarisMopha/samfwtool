@@ -1,11 +1,19 @@
 """
 Android boot image manipulation tools
 Advanced feature not in Odin
+
+Author: SamFWTool Team
+License: MIT
 """
 import struct
 from pathlib import Path
 from typing import Optional, Tuple
 from dataclasses import dataclass
+
+__all__ = [
+    "BootImageInfo",
+    "BootImageTool",
+]
 
 
 @dataclass

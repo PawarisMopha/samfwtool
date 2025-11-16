@@ -1,16 +1,26 @@
 """
 Firmware comparison and differential analysis
 Advanced feature not available in Odin
+
+Author: SamFWTool Team
+License: MIT
 """
 import os
 import hashlib
 import difflib
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 
 from samfwtool.core.parser import FirmwareParser
+
+__all__ = [
+    "ChangeType",
+    "FileDiff",
+    "FirmwareDiffResult",
+    "FirmwareDiff",
+]
 
 
 class ChangeType(Enum):
@@ -43,7 +53,7 @@ class FirmwareDiffResult:
     files_modified: List[FileDiff]
     files_unchanged: int
     total_size_change: int
-    summary: Dict[str, any]
+    summary: Dict[str, Any]  # Fixed typo: any -> Any
 
 
 class FirmwareDiff:

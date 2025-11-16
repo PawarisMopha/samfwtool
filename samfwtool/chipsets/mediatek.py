@@ -137,7 +137,8 @@ class ScatterFileParser:
         """Parse hexadecimal value"""
         try:
             return int(value, 16) if value.startswith('0x') else int(value)
-        except:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Return 0 if value can't be parsed
             return 0
 
     def print_info(self):

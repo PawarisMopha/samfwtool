@@ -1,6 +1,9 @@
 """
 Multi-format firmware parser supporting various vendor formats
 Significantly surpasses Odin's limited TAR support
+
+Author: SamFWTool Team
+License: MIT
 """
 import os
 import tarfile
@@ -12,6 +15,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, BinaryIO
 from dataclasses import dataclass
 from enum import Enum
+
+__all__ = [
+    "FirmwareFormat",
+    "PartitionInfo",
+    "FirmwareInfo",
+    "FirmwareParser",
+]
 
 
 class FirmwareFormat(Enum):
@@ -125,7 +135,8 @@ class FirmwareParser:
                 self.format = FirmwareFormat.ZIP
             else:
                 self.format = FirmwareFormat.UNKNOWN
-        except:
+        except (OSError, IOError, magic.MagicException, Exception) as e:
+            # Fallback to UNKNOWN if magic detection fails
             self.format = FirmwareFormat.UNKNOWN
 
         return self.format
@@ -401,7 +412,8 @@ class FirmwareParser:
                 for magic, fmt in self.MAGIC_NUMBERS.items():
                     if header.startswith(magic):
                         return fmt
-        except:
+        except (OSError, IOError, Exception) as e:
+            # If we can't read the file, assume it's raw
             pass
 
         return 'raw'
