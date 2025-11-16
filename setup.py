@@ -2,9 +2,18 @@
 SamFWTool - Advanced Firmware Analysis & Manipulation Toolkit
 """
 from setuptools import setup, find_packages
+from pathlib import Path
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+# Read README if it exists
+readme_path = Path(__file__).parent / "README.md"
+if readme_path.exists():
+    try:
+        with open(readme_path, "r", encoding="utf-8") as fh:
+            long_description = fh.read()
+    except Exception:
+        long_description = "Advanced cross-platform firmware analysis and manipulation toolkit"
+else:
+    long_description = "Advanced cross-platform firmware analysis and manipulation toolkit"
 
 setup(
     name="samfwtool",

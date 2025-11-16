@@ -398,10 +398,16 @@ Required space: ~100 MB
                         shutil.copy2(item, dest)
 
                 # Copy setup files and requirements
+                critical_files = []
                 for filename in ['setup.py', 'requirements.txt', 'README.md', 'LICENSE']:
                     src_file = source_dir / filename
                     if src_file.exists():
                         shutil.copy2(src_file, install_path / filename)
+                        if filename == 'setup.py':
+                            critical_files.append(filename)
+                        self._install_log(f"  ✓ Copied {filename}")
+                    else:
+                        self._install_log(f"  ⚠ Skipped {filename} (not found)")
 
                 # Copy docs directory if it exists
                 docs_dir = source_dir / 'docs'
@@ -410,17 +416,35 @@ Required space: ~100 MB
                     dest_docs.mkdir(exist_ok=True)
                     for doc_file in docs_dir.glob('*.md'):
                         shutil.copy2(doc_file, dest_docs / doc_file.name)
+                    self._install_log(f"  ✓ Copied docs directory")
 
                 self._install_log("✓ Files copied\n")
+
+                # Verify critical files exist
+                setup_py = install_path / 'setup.py'
+                if not setup_py.exists():
+                    self._install_log("✗ CRITICAL: setup.py not found in installation directory!", error=True)
+                    self._install_log(f"✗ Cannot proceed with package installation\n", error=True)
+                    self.dependencies_ok = False
+                    self.install_progress.stop()
+                    self.root.after(0, lambda: self.next_btn.config(state='disabled'))
+                    self.root.after(0, lambda: self.cancel_btn.config(state='normal'))
+                    return
+                else:
+                    self._install_log(f"✓ Verified setup.py exists: {setup_py}\n")
 
                 # Step 3: Install package in editable mode
                 if self.install_deps_var.get():
                     self._install_log("Installing SamFWTool package...")
                     self._install_log("This may take a few minutes...\n")
 
+                    # Show the command being run
+                    install_cmd = [sys.executable, '-m', 'pip', 'install', '-e', str(install_path)]
+                    self._install_log(f"Running: {' '.join(install_cmd)}\n")
+
                     # Install in editable mode so imports work
                     result = subprocess.run(
-                        [sys.executable, '-m', 'pip', 'install', '-e', str(install_path)],
+                        install_cmd,
                         capture_output=True,
                         text=True,
                         timeout=300
