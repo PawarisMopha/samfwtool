@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "samfwtool"
+version = "2.0.0"
+description = "Advanced cross-platform firmware analysis and manipulation toolkit"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "SamFWTool Team"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click>=8.0.0",
+    "rich>=10.0.0",
+    "pycryptodome>=3.15.0",
+    "lz4>=4.0.0",
+    "brotli>=1.0.0",
+    "python-magic>=0.4.27",
+    "pefile>=2022.5.30",
+    "pyelftools>=0.29",
+    "capstone>=5.0.0",
+    "requests>=2.28.0",
+    "tqdm>=4.64.0",
+    "colorama>=0.4.6",
+]
+
+[project.optional-dependencies]
+gui = ["tk"]
+dev = ["pytest>=7.0.0", "black", "flake8"]
+
+[project.urls]
+Homepage = "https://github.com/samfwtool/samfwtool"
+Documentation = "https://github.com/samfwtool/samfwtool/docs"
+Repository = "https://github.com/samfwtool/samfwtool"
+
+[project.scripts]
+samfwtool = "samfwtool.cli.main:cli"
+samfwtool-gui = "samfwtool.gui.main_gui:main"
+
+[tool.setuptools]
+packages = ["samfwtool", "samfwtool.core", "samfwtool.analysis", "samfwtool.devices",
+            "samfwtool.tools", "samfwtool.plugins", "samfwtool.cli", "samfwtool.api",
+            "samfwtool.flash", "samfwtool.security", "samfwtool.gui", "samfwtool.chipsets"]
+
+[tool.setuptools.package-data]
+samfwtool = ["*.json", "*.yaml", "*.yml"]
