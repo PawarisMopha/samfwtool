@@ -1,6 +1,9 @@
 """
 Advanced security analysis for firmware
 A feature completely absent from Odin
+
+Author: SamFWTool Team
+License: MIT
 """
 import os
 import re
@@ -10,6 +13,12 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
+
+__all__ = [
+    "VulnerabilitySeverity",
+    "SecurityFinding",
+    "SecurityScanner",
+]
 
 
 class VulnerabilitySeverity(Enum):
@@ -139,7 +148,8 @@ class SecurityScanner:
                             evidence=match.group(0)[:100],
                             remediation='Remove hardcoded credentials and use secure storage'
                         ))
-            except:
+            except (OSError, IOError, UnicodeDecodeError, re.error) as e:
+                # Skip files that can't be read or processed
                 pass
 
     def _scan_security_misconfigurations(self):
@@ -162,7 +172,8 @@ class SecurityScanner:
                             evidence=match.group(0),
                             remediation=f'Disable {name.lower()} in production builds'
                         ))
-            except:
+            except (OSError, IOError, UnicodeDecodeError, re.error) as e:
+                # Skip files that can't be read or processed
                 pass
 
     def _scan_vulnerable_libraries(self):
@@ -309,7 +320,8 @@ class SecurityScanner:
                             remediation='Strip debug symbols from production builds'
                         ))
                         break  # Only report once per file
-            except:
+            except (OSError, IOError, struct.error) as e:
+                # Skip files that can't be read or processed
                 pass
 
     def _scan_encryption(self):
@@ -334,7 +346,8 @@ class SecurityScanner:
                             file_path=str(fstab_path.relative_to(self.firmware_dir)),
                             remediation='Enable forceencrypt or fileencryption in fstab'
                         ))
-                except:
+                except (OSError, IOError, UnicodeDecodeError) as e:
+                    # Skip files that can't be read
                     pass
 
     def _find_text_files(self):

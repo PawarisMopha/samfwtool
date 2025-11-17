@@ -2,7 +2,11 @@
 """
 SamFWTool Installation Wizard
 Professional installation with comprehensive error handling
+
+Author: SamFWTool Team
+License: MIT
 """
+from typing import Optional
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import tkinter.font as tkfont
@@ -12,6 +16,7 @@ import subprocess
 import os
 from pathlib import Path
 import shutil
+import traceback
 
 
 class InstallationWizard:
@@ -27,26 +32,26 @@ class InstallationWizard:
     - Progress tracking
     """
 
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("SamFWTool Installation Wizard")
         self.root.geometry("700x600")
         self.root.resizable(False, False)
 
-        self.system = platform.system()
-        self.install_path = self._get_default_install_path()
-        self.current_step = 0
+        self.system: str = platform.system()
+        self.install_path: Path = self._get_default_install_path()
+        self.current_step: int = 0
 
         # Installation state
-        self.python_ok = False
-        self.dependencies_ok = False
-        self.path_configured = False
-        self.shortcut_created = False
+        self.python_ok: bool = False
+        self.dependencies_ok: bool = False
+        self.path_configured: bool = False
+        self.shortcut_created: bool = False
 
         self._create_ui()
         self._center_window()
 
-    def _get_default_install_path(self):
+    def _get_default_install_path(self) -> Path:
         """Get default installation path"""
         if self.system == "Windows":
             return Path(os.environ.get('LOCALAPPDATA', 'C:/')) / 'SamFWTool'
@@ -163,7 +168,6 @@ Click Next to begin installation.
         except Exception as e:
             messagebox.showerror("Error", f"Failed to show welcome screen: {e}")
             print(f"Error in _show_welcome: {e}")
-            import traceback
             traceback.print_exc()
 
     def _show_requirements(self):
@@ -546,51 +550,13 @@ Need help? Check the installation log above for detailed error messages.
             self.install_log.insert(tk.END, message + '\n')
             self.install_log.see(tk.END)
 
-    def _browse_install_path(self):
-        """Browse for installation path"""
-        from tkinter import filedialog
-        path = filedialog.askdirectory()
-        if path:
-            self.path_var.set(path)
+    def _create_desktop_shortcut(self) -> bool:
+        """
+        Create desktop shortcut
 
-    def _add_to_path(self, install_path):
-        """Add to system PATH"""
-        try:
-            if self.system == "Windows":
-                # Windows: Add to user PATH
-                import winreg
-                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment', 0, winreg.KEY_ALL_ACCESS)
-                try:
-                    path, _ = winreg.QueryValueEx(key, 'Path')
-                except WindowsError:
-                    path = ''
-
-                if str(install_path) not in path:
-                    new_path = f"{path};{install_path}" if path else str(install_path)
-                    winreg.SetValueEx(key, 'Path', 0, winreg.REG_EXPAND_SZ, new_path)
-
-                winreg.CloseKey(key)
-                return True
-
-            else:
-                # Linux/macOS: Add to shell profile
-                shell_profile = Path.home() / '.bashrc'
-                if self.system == "Darwin":
-                    shell_profile = Path.home() / '.zshrc'
-
-                export_line = f'\nexport PATH="$PATH:{install_path}"\n'
-
-                with open(shell_profile, 'a') as f:
-                    f.write(export_line)
-
-                return True
-
-        except Exception as e:
-            print(f"Error adding to PATH: {e}")
-            return False
-
-    def _create_desktop_shortcut(self):
-        """Create desktop shortcut"""
+        Returns:
+            bool: True if successful, False otherwise
+        """
         try:
             desktop = Path.home() / 'Desktop'
 
@@ -621,29 +587,9 @@ Categories=Development;Utility;
                 desktop_file.chmod(0o755)
                 return True
 
-        except Exception as e:
+        except (OSError, IOError, PermissionError) as e:
             print(f"Error creating shortcut: {e}")
             return False
-
-    def _create_launcher(self, install_path):
-        """Create launcher scripts"""
-        # CLI launcher
-        if self.system == "Windows":
-            launcher = install_path / "samfwtool.bat"
-            launcher.write_text(f'@echo off\n{sys.executable} -m samfwtool.cli.main %*\n')
-        else:
-            launcher = install_path / "samfwtool"
-            launcher.write_text(f'#!/bin/bash\n{sys.executable} -m samfwtool.cli.main "$@"\n')
-            launcher.chmod(0o755)
-
-        # GUI launcher
-        if self.system == "Windows":
-            gui_launcher = install_path / "samfwtool-gui.bat"
-            gui_launcher.write_text(f'@echo off\nstart {sys.executable} -m samfwtool.gui.main_gui\n')
-        else:
-            gui_launcher = install_path / "samfwtool-gui"
-            gui_launcher.write_text(f'#!/bin/bash\n{sys.executable} -m samfwtool.gui.main_gui &\n')
-            gui_launcher.chmod(0o755)
 
     def _next_step(self):
         """Go to next step"""

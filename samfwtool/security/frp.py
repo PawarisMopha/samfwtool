@@ -289,7 +289,8 @@ class FRPAnalyzer:
                                 ))
                                 print(f"    Google accounts: {google_accounts} (FRP active)")
 
-                        except:
+                        except (KeyError, ValueError, TypeError) as e:
+                            # Skip malformed database entries
                             pass
 
                     conn.close()

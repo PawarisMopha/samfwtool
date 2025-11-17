@@ -1,7 +1,11 @@
 """
 SamFWTool CLI - Main entry point
 Advanced command-line interface surpassing Odin
+
+Author: SamFWTool Team
+License: MIT
 """
+from typing import Optional
 import click
 import sys
 from pathlib import Path
@@ -13,7 +17,7 @@ from samfwtool import __version__
 from samfwtool.core.parser import FirmwareParser
 from samfwtool.core.extractor import FirmwareExtractor
 from samfwtool.core.packer import FirmwarePacker, quick_pack
-from samfwtool.analysis.security import SecurityScanner
+from samfwtool.analysis.security import SecurityScanner, VulnerabilitySeverity
 from samfwtool.analysis.diff import FirmwareDiff
 from samfwtool.tools.bootimg import BootImageTool
 from samfwtool.flash.device import DeviceDetector
@@ -23,6 +27,22 @@ from samfwtool.chipsets.mediatek import ScatterFileParser, MTKFlasher
 from samfwtool.chipsets.qualcomm import EDLFlasher, QualcommChipDetector
 
 console = Console()
+
+__all__ = [
+    "cli",
+    "info",
+    "extract",
+    "pack",
+    "analyze",
+    "security_scan",
+    "diff",
+    "modify",
+    "flash",
+    "detect",
+    "frp",
+    "scatter",
+    "edl",
+]
 
 
 @click.group()
@@ -47,7 +67,7 @@ def cli():
 @cli.command()
 @click.argument('firmware_path', type=click.Path(exists=True))
 @click.option('--detailed', '-d', is_flag=True, help='Show detailed partition information')
-def info(firmware_path, detailed):
+def info(firmware_path: str, detailed: bool) -> None:
     """
     Display firmware information
 
@@ -164,9 +184,11 @@ def scan(firmware_dir, output, deep):
         if output:
             scanner.export_report(Path(output))
 
-        # Return non-zero if critical/high findings
-        critical_high = [f for f in findings
-                        if f.severity.value in ['critical', 'high']]
+        # Return non-zero exit code if critical/high findings
+        critical_high = [
+            f for f in findings
+            if f.severity in (VulnerabilitySeverity.CRITICAL, VulnerabilitySeverity.HIGH)
+        ]
         if critical_high:
             sys.exit(len(critical_high))
 
