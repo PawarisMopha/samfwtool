@@ -1,28 +1,16 @@
 #!/bin/bash
-# SamFWTool - ONE CLICK START
-# Just run: ./start.sh
-
+# SamFWTool - ONE CLICK START (GUI)
 cd "$(dirname "$0")"
 
-# Auto-install if needed (silent)
-if ! python3 -c "import click, tqdm, lz4" 2>/dev/null; then
-    echo "Installing dependencies (one-time)..."
-    pip install -q click tqdm lz4 python-magic 2>/dev/null || pip install click tqdm lz4 python-magic
+# Auto-install dependencies silently
+pip install -q click tqdm lz4 python-magic 2>/dev/null || pip install click tqdm lz4 python-magic 2>/dev/null
+
+# Install tkinter if missing (Linux)
+if [ "$(uname)" == "Linux" ] && ! python3 -c "import tkinter" 2>/dev/null; then
+    echo "Installing GUI dependencies..."
+    sudo apt-get install -y python3-tk 2>/dev/null || true
 fi
 
-# Set path and run
+# Run GUI
 export PYTHONPATH="${PWD}:${PYTHONPATH}"
-
-# If argument provided, run CLI with it
-if [ $# -gt 0 ]; then
-    python3 -m samfwtool.cli.main "$@"
-else
-    # No args = show interactive menu
-    python3 -m samfwtool.cli.main --help
-    echo ""
-    echo "Examples:"
-    echo "  ./start.sh info firmware.tar.md5      # Show firmware info"
-    echo "  ./start.sh extract firmware.tar.md5   # Extract firmware"
-    echo "  ./start.sh devices                    # List connected devices"
-    echo "  ./start.sh scan firmware.tar.md5      # Security scan"
-fi
+python3 -m samfwtool.gui.main_gui "$@"
