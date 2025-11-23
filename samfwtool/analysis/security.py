@@ -361,6 +361,9 @@ class SecurityScanner:
         binary_extensions = ['.so', '.ko', '.bin', '.elf']
         for ext in binary_extensions:
             yield from self.firmware_dir.rglob(f'*{ext}')
+        # Also find versioned shared libraries like libssl.so.1.0.0
+        for path in self.firmware_dir.rglob('*.so.*'):
+            yield path
 
     def _print_summary(self):
         """Print scan summary"""
@@ -407,9 +410,10 @@ class SecurityScanner:
     def export_report(self, output_path: Path, format: str = 'json'):
         """Export security report"""
         import json
+        from datetime import datetime
 
         report = {
-            'scan_date': str(Path.cwd()),
+            'scan_date': datetime.now().isoformat(),
             'firmware_path': str(self.firmware_dir),
             'total_findings': len(self.findings),
             'findings': [

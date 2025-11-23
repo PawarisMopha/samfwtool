@@ -214,7 +214,7 @@ class DeviceDetector:
     @staticmethod
     def _get_fastboot_vars(serial: str) -> Dict[str, str]:
         """Get fastboot variables"""
-        vars = {}
+        fastboot_vars = {}
 
         try:
             result = subprocess.run(['fastboot', '-s', serial, 'getvar', 'all'],
@@ -227,12 +227,12 @@ class DeviceDetector:
                     if len(parts) == 2:
                         key = parts[0].strip()
                         value = parts[1].strip()
-                        vars[key] = value
+                        fastboot_vars[key] = value
 
-        except Exception:
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError):
             pass
 
-        return vars
+        return fastboot_vars
 
     @staticmethod
     def _detect_vendor(props: Dict[str, str]) -> DeviceVendor:

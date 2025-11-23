@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "samfwtool"
-version = "2.0.0"
+version = "2.1.0"
 description = "Advanced cross-platform firmware analysis and manipulation toolkit"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -12,17 +12,24 @@ license = {text = "MIT"}
 authors = [
     {name = "SamFWTool Team"}
 ]
+keywords = ["firmware", "samsung", "android", "odin", "flash", "security", "analysis"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
     "Topic :: Software Development :: Build Tools",
+    "Topic :: Security",
+    "Topic :: System :: Hardware",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
+    "Typing :: Typed",
 ]
 dependencies = [
     "click>=8.0.0",
@@ -41,21 +48,65 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = ["tk"]
-dev = ["pytest>=7.0.0", "black", "flake8"]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.12.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/samfwtool/samfwtool"
 Documentation = "https://github.com/samfwtool/samfwtool/docs"
 Repository = "https://github.com/samfwtool/samfwtool"
+Issues = "https://github.com/samfwtool/samfwtool/issues"
+Changelog = "https://github.com/samfwtool/samfwtool/blob/main/CHANGELOG.md"
 
 [project.scripts]
 samfwtool = "samfwtool.cli.main:cli"
 samfwtool-gui = "samfwtool.gui.main_gui:main"
 
 [tool.setuptools]
-packages = ["samfwtool", "samfwtool.core", "samfwtool.analysis", "samfwtool.devices",
-            "samfwtool.tools", "samfwtool.plugins", "samfwtool.cli", "samfwtool.api",
-            "samfwtool.flash", "samfwtool.security", "samfwtool.gui", "samfwtool.chipsets"]
+packages = [
+    "samfwtool",
+    "samfwtool.core",
+    "samfwtool.analysis",
+    "samfwtool.devices",
+    "samfwtool.tools",
+    "samfwtool.cli",
+    "samfwtool.flash",
+    "samfwtool.security",
+    "samfwtool.gui",
+    "samfwtool.chipsets",
+    "samfwtool.utils",
+]
 
 [tool.setuptools.package-data]
-samfwtool = ["*.json", "*.yaml", "*.yml"]
+samfwtool = ["*.json", "*.yaml", "*.yml", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
