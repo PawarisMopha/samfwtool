@@ -182,7 +182,8 @@ class FirmwarePacker:
             else:
                 merged_chunks.append((chunk_type, chunk_blocks, None))
 
-            i = j if j > i else i + 1
+            # Always advance by at least 1 to prevent infinite loop
+            i = max(j, i + 1)
 
         print(f"  Chunks optimized: {len(chunks)} → {len(merged_chunks)}")
 

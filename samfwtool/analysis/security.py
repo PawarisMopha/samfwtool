@@ -407,9 +407,10 @@ class SecurityScanner:
     def export_report(self, output_path: Path, format: str = 'json'):
         """Export security report"""
         import json
+        from datetime import datetime
 
         report = {
-            'scan_date': str(Path.cwd()),
+            'scan_date': datetime.now().isoformat(),
             'firmware_path': str(self.firmware_dir),
             'total_findings': len(self.findings),
             'findings': [

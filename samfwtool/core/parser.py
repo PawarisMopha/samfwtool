@@ -62,7 +62,12 @@ class FirmwareInfo:
     build_date: Optional[str] = None
     security_patch: Optional[str] = None
     bootloader_version: Optional[str] = None
-    metadata: Dict[str, str] = None
+    metadata: Optional[Dict[str, str]] = None
+
+    def __post_init__(self):
+        """Initialize mutable defaults after creation"""
+        if self.metadata is None:
+            self.metadata = {}
 
 
 class FirmwareParser:

@@ -67,12 +67,14 @@ class TestFirmwareInfo:
 
     def test_partition_list(self, tmp_path):
         """Test getting partition list"""
+        import io
         tar_file = tmp_path / "test.tar"
         with tarfile.open(tar_file, 'w') as tar:
             for name in ["boot.img", "system.img", "vendor.img"]:
+                data = b"x" * 1024  # 1KB of data
                 info = tarfile.TarInfo(name=name)
-                info.size = 1024
-                tar.addfile(info)
+                info.size = len(data)
+                tar.addfile(info, fileobj=io.BytesIO(data))
 
         parser = FirmwareParser(str(tar_file))
         info = parser.parse()
