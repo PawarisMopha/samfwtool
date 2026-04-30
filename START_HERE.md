@@ -1,8 +1,6 @@
-# ⚡ START HERE - One-Click Installation
+# START HERE - One-Click Installation
 
 **Welcome to SamFWTool! Get started in 30 seconds.**
-
----
 
 ## 🚀 Quick Start (Choose Your OS)
 
@@ -15,8 +13,6 @@ Open terminal in this directory and run:
 ```
 
 **That's it!** The script will install everything and show you a menu.
-
----
 
 ### 🪟 Windows
 
@@ -34,8 +30,6 @@ RUN.bat
 
 **That's it!** The script will install everything and show you a menu.
 
----
-
 ## ✅ What Happens Next
 
 1. **Auto-Install** - Checks Python, installs dependencies
@@ -46,15 +40,11 @@ RUN.bat
    - Show help
    - Compare with other tools
 
----
-
 ## 📖 More Information
 
 - **Quick Start Guide:** See `QUICKSTART.md`
 - **Full README:** See `README.md`
 - **Documentation:** See `docs/` folder
-
----
 
 ## 🆘 Problems?
 
@@ -69,6 +59,3 @@ chmod +x RUN.sh INSTALL.sh
 ### Other issues
 See `QUICKSTART.md` troubleshooting section
 
----
-
-**Enjoy! 🎉**
