@@ -19,9 +19,6 @@ Based on the initial release, the following critical recommendations have been i
 samfwtool pack boot.img system.img vendor.img -o custom_firmware.tar.md5
 ```
 
-**Why it matters:** Odin is READ-ONLY. This allows CREATING firmware files.
-
----
 
 ### 2. **Device Flashing Capability** (COMPLETED)
 **Files:**
@@ -50,9 +47,6 @@ samfwtool flash -p boot -i boot.img
 samfwtool backup -p boot -o boot_backup.img
 ```
 
-**Why it matters:** This is THE killer feature - actual device flashing to REPLACE Odin entirely!
-
----
 
 ### 3. **Testing Infrastructure** (COMPLETED)
 **Files:**
@@ -70,9 +64,6 @@ samfwtool backup -p boot -o boot_backup.img
 - Security scanning (Bandit)
 - Automated PyPI releases
 
-**Why it matters:** Production-ready code quality and reliability.
-
----
 
 ### 4. **Comprehensive Roadmap** (COMPLETED)
 **File:** `ROADMAP.md`
@@ -83,8 +74,6 @@ Detailed development plan including:
 - Version 2.3: Advanced features (OTA, binary modification)
 - Version 3.0: User experience (GUI)
 - Version 3.1: Ecosystem (firmware repository)
-
----
 
 ## 📊 Updated Comparison
 
@@ -101,24 +90,22 @@ Detailed development plan including:
 | **CI/CD Testing** | ✗ | ✓ | **NEW** |
 | **Multi-Platform** | Windows | Linux/Mac/Win | **3x** |
 
----
-
 ## 🎯 What This Means
 
-### SamFWTool is now a COMPLETE Odin replacement that:
+### SamFWTool capabilities vs Odin:
 
-1. **Does everything Odin does:**
+1. **Matches Odin:**
    - Flash Samsung devices (via Heimdall)
    - Flash firmware partitions
    - Detect devices
 
-2. **Does it BETTER:**
+2. **Improvements over Odin:**
    - Cross-platform (vs Windows-only)
    - Multi-vendor (vs Samsung-only)
    - Automated safety checks
    - Better error messages
 
-3. **Does things Odin CAN'T:**
+3. **Additional capabilities:**
    - Create firmware files (Odin is read-only)
    - Backup partitions
    - Security analysis
@@ -127,8 +114,6 @@ Detailed development plan including:
    - Sparse image conversion
    - Automated testing
    - Python API
-
----
 
 ## 🚀 New Usage Examples
 
@@ -178,8 +163,6 @@ samfwtool scan custom/ --deep
 samfwtool flash -s ABC123 -p boot -i custom_boot.img
 ```
 
----
-
 ## 🔮 Still TODO (Future Versions)
 
 ### High Priority (v2.1-2.2)
@@ -200,8 +183,6 @@ samfwtool flash -s ABC123 -p boot -i custom_boot.img
 - [ ] Mobile companion app
 - [ ] Cloud firmware storage
 - [ ] Enterprise features
-
----
 
 ## 📝 Development Setup (Updated)
 
@@ -230,8 +211,6 @@ mypy samfwtool/ --ignore-missing-imports
 bandit -r samfwtool/
 ```
 
----
-
 ## 💡 Key Recommendations for Contributors
 
 1. **Focus on Safety:**
@@ -259,11 +238,9 @@ bandit -r samfwtool/
    - Add parallel processing
    - Implement caching
 
----
-
 ## 🎉 Summary
 
-With these implementations, **SamFWTool has evolved from a firmware analysis tool to a COMPLETE firmware manipulation and flashing toolkit** that not only matches but significantly exceeds Odin's capabilities.
+With these implementations, SamFWTool covers the full firmware manipulation and flashing workflow, including capabilities beyond Odin.
 
 **The toolkit is now:**
 - ✅ Feature-complete for basic workflows
@@ -272,4 +249,4 @@ With these implementations, **SamFWTool has evolved from a firmware analysis too
 - ✅ Extensible and well-documented
 - ✅ Open source and community-driven
 
-**Next milestone:** Complete the test suite and release v2.1 with full Odin feature parity + extras!
+**Next milestone:** Complete the test suite and release v2.1.

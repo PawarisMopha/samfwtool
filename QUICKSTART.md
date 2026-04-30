@@ -1,8 +1,4 @@
-# 🚀 SamFWTool - One-Click Quick Start Guide
-
-**The easiest way to run SamFWTool - no configuration needed!**
-
----
+# SamFWTool - Quick Start Guide
 
 ## ⚡ Super Quick Start (Recommended)
 
@@ -26,8 +22,6 @@ That's it! The script will:
 - ✅ Set up SamFWTool
 - ✅ Show you an interactive menu
 
----
-
 ## 📋 What You Get
 
 ### Interactive Menu
@@ -49,8 +43,6 @@ What would you like to do?
 
 Enter choice [1-5]:
 ```
-
----
 
 ## 🎯 Usage Options
 
@@ -104,8 +96,6 @@ INSTALL.bat
 
 After installation, use the launchers or direct Python commands.
 
----
-
 ## 🔧 Installation Details
 
 ### What Gets Installed
@@ -138,8 +128,6 @@ The following packages are installed automatically:
 - capstone (disassembly)
 - requests, tqdm (utilities)
 - colorama (colored output)
-
----
 
 ## 📖 Command Examples
 
@@ -200,8 +188,6 @@ The following packages are installed automatically:
 ./samfwtool-run.sh edl flash rawprogram.xml
 ```
 
----
-
 ## 🎨 GUI Features
 
 Launch the GUI with:
@@ -218,8 +204,6 @@ samfwtool-gui-run.bat       # Windows
 4. **🔒 Security** - Security scanning and FRP analysis
 5. **🔧 Chipset Tools** - MTK and Qualcomm tools
 6. **🛠️ Tools** - Pack, compare, and modify firmware
-
----
 
 ## 🆘 Troubleshooting
 
@@ -279,8 +263,6 @@ System-managed Python (like on Debian/Ubuntu):
 python3 -m pip install --user -r requirements.txt
 ```
 
----
-
 ## 🌟 Advanced Usage
 
 ### Add to Shell Permanently
@@ -325,8 +307,6 @@ export PYTHONPATH=$SAMFWTOOL_HOME:$PYTHONPATH
 export SAMFWTOOL_DEBUG=1
 ```
 
----
-
 ## 📚 Next Steps
 
 After installation:
@@ -335,8 +315,6 @@ After installation:
 2. **Read the docs:** See `docs/` directory
 3. **View examples:** Check `examples/` directory
 4. **Explore features:** Run `./samfwtool-run.sh --help`
-
----
 
 ## 🎯 Why SamFWTool?
 
@@ -364,13 +342,9 @@ After installation:
 - 🔧 Boot image modification
 - 🎯 Multi-format support (TAR, ZIP, IMG, SPARSE, etc.)
 
----
-
 ## 📄 License
 
 MIT License - Free to use, modify, and distribute
-
----
 
 ## 🤝 Support
 
@@ -379,6 +353,3 @@ MIT License - Free to use, modify, and distribute
 - **Issues:** Open an issue on GitHub
 - **Contributing:** See `CONTRIBUTING.md`
 
----
-
-**Enjoy using SamFWTool! 🎉**

@@ -17,8 +17,6 @@
 2. Follow the installation wizard
 3. Done! Desktop shortcut will be created
 
----
-
 ## 📋 What Gets Installed
 
 The installer will:
@@ -28,8 +26,6 @@ The installer will:
 - ✅ Configure system PATH
 - ✅ Create desktop shortcut
 - ✅ Create one-click launchers
-
----
 
 ## 🎯 Running SamFWTool GUI
 
@@ -51,8 +47,6 @@ samfwtool-gui
 ```bash
 python -m samfwtool.gui.main_gui
 ```
-
----
 
 ## 🔧 GUI Features
 
@@ -87,8 +81,6 @@ The GUI provides all SamFWTool features in an easy-to-use interface:
 - Pack firmware from partitions
 - Compare firmware versions
 - Boot image tools
-
----
 
 ## ❓ Troubleshooting
 
@@ -160,8 +152,6 @@ chmod +x RUN_GUI.sh
    pip install -r requirements.txt
    ```
 
----
-
 ## 📝 Manual Installation (Advanced)
 
 If automatic installation fails:
@@ -177,8 +167,6 @@ pip install -e .
 python -m samfwtool.gui.main_gui
 ```
 
----
-
 ## 🆘 Getting Help
 
 **Installation Issues:**
@@ -193,8 +181,6 @@ python -m samfwtool.gui.main_gui
 **Feature Requests:**
 - Open issue on GitHub
 
----
-
 ## 🎓 Next Steps
 
 After installation:
@@ -204,16 +190,12 @@ After installation:
 3. **View Comparisons:** See `docs/COMPARISON_ALL_TOOLS.md`
 4. **Try Examples:** Look in `examples/` directory
 
----
-
 ## 💡 Tips
 
 - **First Time:** Start with the Analyze tab to explore firmware files
 - **Safety:** Always enable safety checks when flashing
 - **Backups:** Use the backup feature before flashing
 - **Updates:** Run installer again to update to latest version
-
----
 
 ## 🌟 Features Available in GUI
 
@@ -228,4 +210,3 @@ All SamFWTool features accessible via GUI:
 ✅ Boot image manipulation
 ✅ Chipset-specific tools
 
-**No other firmware tool has a GUI this comprehensive!**
