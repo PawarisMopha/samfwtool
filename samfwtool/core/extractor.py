@@ -5,6 +5,7 @@ Extracts and unpacks firmware files from multiple formats
 Author: SamFWTool Team
 License: MIT
 """
+
 import os
 import tarfile
 import zipfile
@@ -73,8 +74,9 @@ class FirmwareExtractor:
         else:
             return self._extract_generic()
 
-    def extract_partition(self, partition_name: str, output_path: Optional[str] = None,
-                         decompress: bool = True) -> bool:
+    def extract_partition(
+        self, partition_name: str, output_path: Optional[str] = None, decompress: bool = True
+    ) -> bool:
         """
         Extract a specific partition
 
@@ -113,7 +115,7 @@ class FirmwareExtractor:
         """Extract TAR firmware"""
         print(f"Extracting TAR firmware to {self.output_dir}")
 
-        with tarfile.open(self.firmware_path, 'r') as tar:
+        with tarfile.open(self.firmware_path, "r") as tar:
             members = tar.getmembers()
 
             for member in tqdm(members, desc="Extracting", unit="file"):
@@ -126,7 +128,7 @@ class FirmwareExtractor:
 
                     # Write to output
                     output_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(output_path, 'wb') as dst:
+                    with open(output_path, "wb") as dst:
                         dst.write(data)
 
                     # Decompress if needed
@@ -138,14 +140,14 @@ class FirmwareExtractor:
 
     def _extract_tar_member(self, member_name: str, output_path: Path, decompress: bool) -> bool:
         """Extract a specific member from TAR"""
-        with tarfile.open(self.firmware_path, 'r') as tar:
+        with tarfile.open(self.firmware_path, "r") as tar:
             try:
                 member = tar.getmember(member_name)
                 with tar.extractfile(member) as src:
                     data = src.read()
 
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_path, 'wb') as dst:
+                with open(output_path, "wb") as dst:
                     dst.write(data)
 
                 if decompress:
@@ -161,7 +163,7 @@ class FirmwareExtractor:
         """Extract ZIP firmware"""
         print(f"Extracting ZIP firmware to {self.output_dir}")
 
-        with zipfile.ZipFile(self.firmware_path, 'r') as zf:
+        with zipfile.ZipFile(self.firmware_path, "r") as zf:
             members = [m for m in zf.infolist() if not m.is_dir()]
 
             for member in tqdm(members, desc="Extracting", unit="file"):
@@ -172,7 +174,7 @@ class FirmwareExtractor:
 
                 # Write to output
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_path, 'wb') as dst:
+                with open(output_path, "wb") as dst:
                     dst.write(data)
 
                 # Decompress if needed
@@ -184,12 +186,12 @@ class FirmwareExtractor:
 
     def _extract_zip_member(self, member_name: str, output_path: Path, decompress: bool) -> bool:
         """Extract a specific member from ZIP"""
-        with zipfile.ZipFile(self.firmware_path, 'r') as zf:
+        with zipfile.ZipFile(self.firmware_path, "r") as zf:
             try:
                 data = zf.read(member_name)
 
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_path, 'wb') as dst:
+                with open(output_path, "wb") as dst:
                     dst.write(data)
 
                 if decompress:
@@ -209,11 +211,11 @@ class FirmwareExtractor:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Copy file
-        with open(self.firmware_path, 'rb') as src:
-            with open(output_path, 'wb') as dst:
+        with open(self.firmware_path, "rb") as src:
+            with open(output_path, "wb") as dst:
                 # Copy in chunks with progress
                 file_size = self.firmware_path.stat().st_size
-                with tqdm(total=file_size, unit='B', unit_scale=True, desc="Copying") as pbar:
+                with tqdm(total=file_size, unit="B", unit_scale=True, desc="Copying") as pbar:
                     while True:
                         chunk = src.read(8192)
                         if not chunk:
@@ -233,24 +235,24 @@ class FirmwareExtractor:
         This is a major feature not available in Odin
         """
         output_path = self.output_dir / self.firmware_path.stem
-        output_path = output_path.with_suffix('.img')
+        output_path = output_path.with_suffix(".img")
 
         print(f"Converting sparse image to raw: {output_path}")
 
-        with open(self.firmware_path, 'rb') as f:
+        with open(self.firmware_path, "rb") as f:
             # Read sparse header
-            magic = struct.unpack('<I', f.read(4))[0]
-            if magic != 0xed26ff3a:
+            magic = struct.unpack("<I", f.read(4))[0]
+            if magic != 0xED26FF3A:
                 raise ValueError("Invalid sparse image magic")
 
-            major_version = struct.unpack('<H', f.read(2))[0]
-            minor_version = struct.unpack('<H', f.read(2))[0]
-            file_hdr_sz = struct.unpack('<H', f.read(2))[0]
-            chunk_hdr_sz = struct.unpack('<H', f.read(2))[0]
-            blk_sz = struct.unpack('<I', f.read(4))[0]
-            total_blks = struct.unpack('<I', f.read(4))[0]
-            total_chunks = struct.unpack('<I', f.read(4))[0]
-            image_checksum = struct.unpack('<I', f.read(4))[0]
+            major_version = struct.unpack("<H", f.read(2))[0]
+            minor_version = struct.unpack("<H", f.read(2))[0]
+            file_hdr_sz = struct.unpack("<H", f.read(2))[0]
+            chunk_hdr_sz = struct.unpack("<H", f.read(2))[0]
+            blk_sz = struct.unpack("<I", f.read(4))[0]
+            total_blks = struct.unpack("<I", f.read(4))[0]
+            total_chunks = struct.unpack("<I", f.read(4))[0]
+            image_checksum = struct.unpack("<I", f.read(4))[0]
 
             print(f"Sparse image info:")
             print(f"  Block size: {blk_sz} bytes")
@@ -262,13 +264,13 @@ class FirmwareExtractor:
             f.seek(file_hdr_sz)
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, 'wb') as out:
+            with open(output_path, "wb") as out:
                 for i in tqdm(range(total_chunks), desc="Converting chunks", unit="chunk"):
                     # Read chunk header
-                    chunk_type = struct.unpack('<H', f.read(2))[0]
-                    reserved1 = struct.unpack('<H', f.read(2))[0]
-                    chunk_sz = struct.unpack('<I', f.read(4))[0]
-                    total_sz = struct.unpack('<I', f.read(4))[0]
+                    chunk_type = struct.unpack("<H", f.read(2))[0]
+                    reserved1 = struct.unpack("<H", f.read(2))[0]
+                    chunk_sz = struct.unpack("<I", f.read(4))[0]
+                    total_sz = struct.unpack("<I", f.read(4))[0]
 
                     if chunk_type == 0xCAC1:  # Raw chunk
                         # Copy raw data
@@ -281,7 +283,7 @@ class FirmwareExtractor:
                             out.write(fill_value * (blk_sz // 4))
                     elif chunk_type == 0xCAC3:  # Don't care chunk
                         # Write zeros
-                        out.write(b'\x00' * (chunk_sz * blk_sz))
+                        out.write(b"\x00" * (chunk_sz * blk_sz))
                     elif chunk_type == 0xCAC4:  # CRC32 chunk
                         # Skip CRC
                         f.read(4)
@@ -301,18 +303,18 @@ class FirmwareExtractor:
         Supports: gzip, bzip2, xz, lz4
         """
         # Read file header
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             header = f.read(8)
 
         decompressed_path = None
 
         # Detect compression and decompress with proper error handling
         try:
-            if header.startswith(b'\x1f\x8b'):  # gzip
+            if header.startswith(b"\x1f\x8b"):  # gzip
                 print(f"  Decompressing (gzip): {file_path.name}")
-                decompressed_path = file_path.with_suffix('')
-                with gzip.open(file_path, 'rb') as src:
-                    with open(decompressed_path, 'wb') as dst:
+                decompressed_path = file_path.with_suffix("")
+                with gzip.open(file_path, "rb") as src:
+                    with open(decompressed_path, "wb") as dst:
                         dst.write(src.read())
                 # Only delete original if decompression succeeded and output exists
                 if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
@@ -320,11 +322,11 @@ class FirmwareExtractor:
                 else:
                     raise IOError(f"Decompression failed: output file is empty or missing")
 
-            elif header.startswith(b'\x42\x5a'):  # bzip2
+            elif header.startswith(b"\x42\x5a"):  # bzip2
                 print(f"  Decompressing (bzip2): {file_path.name}")
-                decompressed_path = file_path.with_suffix('')
-                with bz2.open(file_path, 'rb') as src:
-                    with open(decompressed_path, 'wb') as dst:
+                decompressed_path = file_path.with_suffix("")
+                with bz2.open(file_path, "rb") as src:
+                    with open(decompressed_path, "wb") as dst:
                         dst.write(src.read())
                 # Only delete original if decompression succeeded
                 if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
@@ -332,11 +334,11 @@ class FirmwareExtractor:
                 else:
                     raise IOError(f"Decompression failed: output file is empty or missing")
 
-            elif header.startswith(b'\xfd\x37\x7a\x58\x5a'):  # xz
+            elif header.startswith(b"\xfd\x37\x7a\x58\x5a"):  # xz
                 print(f"  Decompressing (xz): {file_path.name}")
-                decompressed_path = file_path.with_suffix('')
-                with lzma.open(file_path, 'rb') as src:
-                    with open(decompressed_path, 'wb') as dst:
+                decompressed_path = file_path.with_suffix("")
+                with lzma.open(file_path, "rb") as src:
+                    with open(decompressed_path, "wb") as dst:
                         dst.write(src.read())
                 # Only delete original if decompression succeeded
                 if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
@@ -344,11 +346,11 @@ class FirmwareExtractor:
                 else:
                     raise IOError(f"Decompression failed: output file is empty or missing")
 
-            elif header.startswith(b'\x04\x22\x4d\x18'):  # lz4
+            elif header.startswith(b"\x04\x22\x4d\x18"):  # lz4
                 print(f"  Decompressing (lz4): {file_path.name}")
-                decompressed_path = file_path.with_suffix('')
-                with lz4.frame.open(file_path, 'rb') as src:
-                    with open(decompressed_path, 'wb') as dst:
+                decompressed_path = file_path.with_suffix("")
+                with lz4.frame.open(file_path, "rb") as src:
+                    with open(decompressed_path, "wb") as dst:
                         dst.write(src.read())
                 # Only delete original if decompression succeeded
                 if decompressed_path.exists() and decompressed_path.stat().st_size > 0:
@@ -371,17 +373,17 @@ class FirmwareExtractor:
         info = self.parser.parse()
 
         return {
-            'firmware_format': info.format.value,
-            'total_size': info.size,
-            'partition_count': len(info.partitions),
-            'partitions': [
+            "firmware_format": info.format.value,
+            "total_size": info.size,
+            "partition_count": len(info.partitions),
+            "partitions": [
                 {
-                    'name': p.name,
-                    'size': p.size,
-                    'type': p.type,
-                    'format': p.format,
-                    'compressed': p.compression is not None
+                    "name": p.name,
+                    "size": p.size,
+                    "type": p.type,
+                    "format": p.format,
+                    "compressed": p.compression is not None,
                 }
                 for p in info.partitions
-            ]
+            ],
         }

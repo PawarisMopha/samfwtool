@@ -1,6 +1,7 @@
 """
 Utility modules for SamFWTool
 """
+
 from samfwtool.utils.validation import (
     validate_path,
     validate_firmware_path,

@@ -1,6 +1,7 @@
 """
 Device detection and management
 """
+
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -10,6 +11,7 @@ from enum import Enum
 
 class DeviceMode(Enum):
     """Device connection modes"""
+
     ADB = "adb"
     FASTBOOT = "fastboot"
     DOWNLOAD = "download"  # Samsung Odin mode
@@ -20,6 +22,7 @@ class DeviceMode(Enum):
 
 class DeviceVendor(Enum):
     """Device manufacturers"""
+
     SAMSUNG = "samsung"
     GOOGLE = "google"
     XIAOMI = "xiaomi"
@@ -31,6 +34,7 @@ class DeviceVendor(Enum):
 @dataclass
 class Device:
     """Represents a connected device"""
+
     serial: str
     vendor: DeviceVendor
     model: str
@@ -52,14 +56,15 @@ class DeviceDetector:
         devices = []
 
         try:
-            result = subprocess.run(['adb', 'devices', '-l'],
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["adb", "devices", "-l"], capture_output=True, text=True, timeout=5
+            )
 
             if result.returncode != 0:
                 return devices
 
-            for line in result.stdout.split('\n')[1:]:  # Skip header
-                if not line.strip() or 'offline' in line:
+            for line in result.stdout.split("\n")[1:]:  # Skip header
+                if not line.strip() or "offline" in line:
                     continue
 
                 parts = line.split()
@@ -76,10 +81,10 @@ class DeviceDetector:
                 vendor = DeviceDetector._detect_vendor(props)
 
                 # Get model
-                model = props.get('ro.product.model', 'Unknown')
+                model = props.get("ro.product.model", "Unknown")
 
                 # Check bootloader status
-                bootloader_locked = props.get('ro.boot.verifiedbootstate', '') != 'orange'
+                bootloader_locked = props.get("ro.boot.verifiedbootstate", "") != "orange"
 
                 device = Device(
                     serial=serial,
@@ -87,7 +92,7 @@ class DeviceDetector:
                     model=model,
                     mode=mode,
                     bootloader_locked=bootloader_locked,
-                    properties=props
+                    properties=props,
                 )
                 devices.append(device)
 
@@ -104,13 +109,14 @@ class DeviceDetector:
         devices = []
 
         try:
-            result = subprocess.run(['fastboot', 'devices'],
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["fastboot", "devices"], capture_output=True, text=True, timeout=5
+            )
 
             if result.returncode != 0:
                 return devices
 
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 if not line.strip():
                     continue
 
@@ -124,8 +130,8 @@ class DeviceDetector:
                 props = DeviceDetector._get_fastboot_vars(serial)
 
                 vendor = DeviceDetector._detect_vendor(props)
-                model = props.get('product', 'Unknown')
-                bootloader_locked = props.get('unlocked', 'no') == 'no'
+                model = props.get("product", "Unknown")
+                bootloader_locked = props.get("unlocked", "no") == "no"
 
                 device = Device(
                     serial=serial,
@@ -133,7 +139,7 @@ class DeviceDetector:
                     model=model,
                     mode=DeviceMode.FASTBOOT,
                     bootloader_locked=bootloader_locked,
-                    properties=props
+                    properties=props,
                 )
                 devices.append(device)
 
@@ -155,18 +161,19 @@ class DeviceDetector:
 
         try:
             # Try using heimdall
-            result = subprocess.run(['heimdall', 'detect'],
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["heimdall", "detect"], capture_output=True, text=True, timeout=5
+            )
 
-            if result.returncode == 0 and 'Device detected' in result.stdout:
+            if result.returncode == 0 and "Device detected" in result.stdout:
                 # Samsung device in download mode detected
                 device = Device(
-                    serial='heimdall-device',
+                    serial="heimdall-device",
                     vendor=DeviceVendor.SAMSUNG,
-                    model='Unknown Samsung',
+                    model="Unknown Samsung",
                     mode=DeviceMode.DOWNLOAD,
                     bootloader_locked=True,  # Assume locked
-                    properties={}
+                    properties={},
                 )
                 devices.append(device)
 
@@ -194,16 +201,20 @@ class DeviceDetector:
         props = {}
 
         try:
-            result = subprocess.run(['adb', '-s', serial, 'shell', 'getprop'],
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["adb", "-s", serial, "shell", "getprop"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if result.returncode == 0:
-                for line in result.stdout.split('\n'):
-                    if ']:' in line:
-                        parts = line.split(']:')
+                for line in result.stdout.split("\n"):
+                    if "]:" in line:
+                        parts = line.split("]:")
                         if len(parts) == 2:
-                            key = parts[0].strip('[').strip()
-                            value = parts[1].strip().strip('[]')
+                            key = parts[0].strip("[").strip()
+                            value = parts[1].strip().strip("[]")
                             props[key] = value
 
         except Exception:
@@ -217,13 +228,17 @@ class DeviceDetector:
         fastboot_vars = {}
 
         try:
-            result = subprocess.run(['fastboot', '-s', serial, 'getvar', 'all'],
-                                  capture_output=True, text=True, timeout=10,
-                                  stderr=subprocess.STDOUT)  # fastboot outputs to stderr
+            result = subprocess.run(
+                ["fastboot", "-s", serial, "getvar", "all"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                stderr=subprocess.STDOUT,
+            )  # fastboot outputs to stderr
 
-            for line in result.stdout.split('\n'):
-                if ':' in line:
-                    parts = line.split(':', 1)
+            for line in result.stdout.split("\n"):
+                if ":" in line:
+                    parts = line.split(":", 1)
                     if len(parts) == 2:
                         key = parts[0].strip()
                         value = parts[1].strip()
@@ -237,19 +252,19 @@ class DeviceDetector:
     @staticmethod
     def _detect_vendor(props: Dict[str, str]) -> DeviceVendor:
         """Detect device vendor from properties"""
-        manufacturer = props.get('ro.product.manufacturer', '').lower()
-        brand = props.get('ro.product.brand', '').lower()
-        product = props.get('product', '').lower()
+        manufacturer = props.get("ro.product.manufacturer", "").lower()
+        brand = props.get("ro.product.brand", "").lower()
+        product = props.get("product", "").lower()
 
-        if 'samsung' in manufacturer or 'samsung' in brand:
+        if "samsung" in manufacturer or "samsung" in brand:
             return DeviceVendor.SAMSUNG
-        elif 'google' in manufacturer or 'google' in brand:
+        elif "google" in manufacturer or "google" in brand:
             return DeviceVendor.GOOGLE
-        elif 'xiaomi' in manufacturer or 'xiaomi' in brand or 'redmi' in brand:
+        elif "xiaomi" in manufacturer or "xiaomi" in brand or "redmi" in brand:
             return DeviceVendor.XIAOMI
-        elif 'oneplus' in manufacturer or 'oneplus' in brand:
+        elif "oneplus" in manufacturer or "oneplus" in brand:
             return DeviceVendor.ONEPLUS
-        elif 'motorola' in manufacturer or 'motorola' in brand:
+        elif "motorola" in manufacturer or "motorola" in brand:
             return DeviceVendor.MOTOROLA
         else:
             return DeviceVendor.GENERIC
@@ -257,9 +272,9 @@ class DeviceDetector:
     @staticmethod
     def print_device_info(device: Device):
         """Print detailed device information"""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("DEVICE INFORMATION")
-        print("="*70)
+        print("=" * 70)
         print(f"Serial: {device.serial}")
         print(f"Vendor: {device.vendor.value}")
         print(f"Model: {device.model}")

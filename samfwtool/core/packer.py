@@ -5,6 +5,7 @@ Allows creating firmware files from extracted partitions
 Author: SamFWTool Team
 License: MIT
 """
+
 import os
 import tarfile
 import hashlib
@@ -71,12 +72,12 @@ class FirmwarePacker:
 
         # Determine output file
         if self.format == FirmwareFormat.TAR_MD5:
-            tar_path = self.output_path.with_suffix('.tar.md5')
+            tar_path = self.output_path.with_suffix(".tar.md5")
         else:
             tar_path = self.output_path
 
         # Create TAR archive
-        with tarfile.open(tar_path, 'w') as tar:
+        with tarfile.open(tar_path, "w") as tar:
             for file_path, archive_name in tqdm(self.files_to_pack, desc="Packing", unit="file"):
                 print(f"  Adding: {archive_name} ({file_path.stat().st_size:,} bytes)")
                 tar.add(file_path, arcname=archive_name)
@@ -89,8 +90,8 @@ class FirmwarePacker:
             print(f"MD5 checksum: {md5_hash}")
 
             # Optionally create .md5 file
-            md5_file = tar_path.with_suffix('.md5')
-            with open(md5_file, 'w') as f:
+            md5_file = tar_path.with_suffix(".md5")
+            with open(md5_file, "w") as f:
                 f.write(f"{md5_hash}  {tar_path.name}\n")
             print(f"MD5 file created: {md5_file}")
 
@@ -100,13 +101,14 @@ class FirmwarePacker:
     def _generate_md5(self, file_path: Path) -> str:
         """Generate MD5 checksum of a file"""
         md5 = hashlib.md5()
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 md5.update(chunk)
         return md5.hexdigest()
 
-    def create_sparse_image(self, raw_image: Path, output_path: Path,
-                           block_size: int = 4096) -> bool:
+    def create_sparse_image(
+        self, raw_image: Path, output_path: Path, block_size: int = 4096
+    ) -> bool:
         """
         Convert raw image to Android sparse format
 
@@ -135,7 +137,7 @@ class FirmwarePacker:
         print(f"  Total blocks: {total_blocks}")
 
         # Sparse image header
-        SPARSE_HEADER_MAGIC = 0xed26ff3a
+        SPARSE_HEADER_MAGIC = 0xED26FF3A
         SPARSE_HEADER_MAJOR_VERSION = 1
         SPARSE_HEADER_MINOR_VERSION = 0
         FILE_HDR_SIZE = 28
@@ -145,14 +147,14 @@ class FirmwarePacker:
         chunk_count = 0
 
         # Read raw image and create chunks
-        with open(raw_image, 'rb') as f:
+        with open(raw_image, "rb") as f:
             for block_num in tqdm(range(total_blocks), desc="Analyzing blocks", unit="block"):
                 block_data = f.read(block_size)
                 if not block_data:
                     break
 
                 # Check if block is all zeros (don't care chunk)
-                if block_data == b'\x00' * len(block_data):
+                if block_data == b"\x00" * len(block_data):
                     chunk_type = 0xCAC3  # Don't care
                     chunks.append((chunk_type, 1, None))
                 else:
@@ -178,7 +180,7 @@ class FirmwarePacker:
                 j += 1
 
             if chunk_type == 0xCAC1:
-                merged_chunks.append((chunk_type, chunk_blocks, b''.join(merged_data)))
+                merged_chunks.append((chunk_type, chunk_blocks, b"".join(merged_data)))
             else:
                 merged_chunks.append((chunk_type, chunk_blocks, None))
 
@@ -188,31 +190,33 @@ class FirmwarePacker:
         print(f"  Chunks optimized: {len(chunks)} → {len(merged_chunks)}")
 
         # Write sparse image
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             # Write file header
-            f.write(struct.pack('<I', SPARSE_HEADER_MAGIC))
-            f.write(struct.pack('<H', SPARSE_HEADER_MAJOR_VERSION))
-            f.write(struct.pack('<H', SPARSE_HEADER_MINOR_VERSION))
-            f.write(struct.pack('<H', FILE_HDR_SIZE))
-            f.write(struct.pack('<H', CHUNK_HDR_SIZE))
-            f.write(struct.pack('<I', block_size))
-            f.write(struct.pack('<I', total_blocks))
-            f.write(struct.pack('<I', len(merged_chunks)))
-            f.write(struct.pack('<I', 0))  # Image checksum (optional)
+            f.write(struct.pack("<I", SPARSE_HEADER_MAGIC))
+            f.write(struct.pack("<H", SPARSE_HEADER_MAJOR_VERSION))
+            f.write(struct.pack("<H", SPARSE_HEADER_MINOR_VERSION))
+            f.write(struct.pack("<H", FILE_HDR_SIZE))
+            f.write(struct.pack("<H", CHUNK_HDR_SIZE))
+            f.write(struct.pack("<I", block_size))
+            f.write(struct.pack("<I", total_blocks))
+            f.write(struct.pack("<I", len(merged_chunks)))
+            f.write(struct.pack("<I", 0))  # Image checksum (optional)
 
             # Write chunks
-            for chunk_type, chunk_blocks, chunk_data in tqdm(merged_chunks, desc="Writing chunks", unit="chunk"):
+            for chunk_type, chunk_blocks, chunk_data in tqdm(
+                merged_chunks, desc="Writing chunks", unit="chunk"
+            ):
                 # Chunk header
-                f.write(struct.pack('<H', chunk_type))
-                f.write(struct.pack('<H', 0))  # Reserved
-                f.write(struct.pack('<I', chunk_blocks))
+                f.write(struct.pack("<H", chunk_type))
+                f.write(struct.pack("<H", 0))  # Reserved
+                f.write(struct.pack("<I", chunk_blocks))
 
                 if chunk_type == 0xCAC1:  # Raw chunk
                     total_size = CHUNK_HDR_SIZE + len(chunk_data)
                 else:
                     total_size = CHUNK_HDR_SIZE
 
-                f.write(struct.pack('<I', total_size))
+                f.write(struct.pack("<I", total_size))
 
                 # Chunk data (only for raw chunks)
                 if chunk_type == 0xCAC1 and chunk_data:
@@ -236,7 +240,7 @@ class FirmwarePacker:
         # Verify it can be opened
         try:
             if self.format in [FirmwareFormat.TAR, FirmwareFormat.TAR_MD5]:
-                with tarfile.open(self.output_path, 'r') as tar:
+                with tarfile.open(self.output_path, "r") as tar:
                     members = tar.getmembers()
                     print(f"Validation: Found {len(members)} files in archive")
                     return len(members) > 0
@@ -247,7 +251,9 @@ class FirmwarePacker:
         return True
 
 
-def quick_pack(files: List[Path], output: Path, format: FirmwareFormat = FirmwareFormat.TAR_MD5) -> bool:
+def quick_pack(
+    files: List[Path], output: Path, format: FirmwareFormat = FirmwareFormat.TAR_MD5
+) -> bool:
     """
     Quick utility function to pack files into firmware
 

@@ -4,6 +4,7 @@ Centralized logging configuration for SamFWTool
 Author: SamFWTool Team
 License: MIT
 """
+
 import logging
 import sys
 from pathlib import Path

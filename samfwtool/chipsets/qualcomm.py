@@ -8,6 +8,7 @@ This SURPASSES QFIL by being:
 - Better safety checks
 - Python API for automation
 """
+
 import struct
 import time
 from pathlib import Path
@@ -18,6 +19,7 @@ from enum import Enum
 
 class QualcommChipset(Enum):
     """Qualcomm chipset families"""
+
     SNAPDRAGON_2XX = "snapdragon_2xx"
     SNAPDRAGON_4XX = "snapdragon_4xx"
     SNAPDRAGON_6XX = "snapdragon_6xx"
@@ -29,6 +31,7 @@ class QualcommChipset(Enum):
 
 class EDLMode(Enum):
     """EDL operation modes"""
+
     SAHARA = "sahara"  # Older protocol
     FIREHOSE = "firehose"  # Newer protocol
     UNKNOWN = "unknown"
@@ -37,6 +40,7 @@ class EDLMode(Enum):
 @dataclass
 class QualcommPartition:
     """Qualcomm partition from rawprogram XML"""
+
     sector_size_in_bytes: int
     num_partition_sectors: int
     physical_partition_number: int
@@ -58,7 +62,7 @@ class EDLFlasher:
     - No leaked binaries
     """
 
-    def __init__(self, port: str = '/dev/ttyUSB0'):
+    def __init__(self, port: str = "/dev/ttyUSB0"):
         self.port = port
         self.mode = EDLMode.UNKNOWN
         self.device_info = {}
@@ -77,7 +81,7 @@ class EDLFlasher:
         try:
             # Check if port exists
             port_path = Path(self.port)
-            if not port_path.exists() and not self.port.startswith('COM'):
+            if not port_path.exists() and not self.port.startswith("COM"):
                 print(f"❌ Port {self.port} not found")
                 return False
 
@@ -122,22 +126,22 @@ class EDLFlasher:
             tree = ET.parse(rawprogram_file)
             root = tree.getroot()
 
-            for program in root.findall('program'):
-                sector_size = int(program.get('SECTOR_SIZE_IN_BYTES', '512'))
-                num_sectors = int(program.get('num_partition_sectors', '0'))
-                phys_partition = int(program.get('physical_partition_number', '0'))
-                start_sector = program.get('start_sector', '0')
-                label = program.get('label', '')
-                filename = program.get('filename', '')
+            for program in root.findall("program"):
+                sector_size = int(program.get("SECTOR_SIZE_IN_BYTES", "512"))
+                num_sectors = int(program.get("num_partition_sectors", "0"))
+                phys_partition = int(program.get("physical_partition_number", "0"))
+                start_sector = program.get("start_sector", "0")
+                label = program.get("label", "")
+                filename = program.get("filename", "")
 
-                if filename and filename != '':  # Only partitions with files
+                if filename and filename != "":  # Only partitions with files
                     partition = QualcommPartition(
                         sector_size_in_bytes=sector_size,
                         num_partition_sectors=num_sectors,
                         physical_partition_number=phys_partition,
                         start_sector=start_sector,
                         label=label,
-                        filename=filename
+                        filename=filename,
                     )
                     partitions.append(partition)
 
@@ -148,7 +152,9 @@ class EDLFlasher:
             print(f"❌ Error parsing rawprogram: {e}")
             return []
 
-    def flash_firmware(self, firmware_dir: Path, rawprogram: Path, patch: Optional[Path] = None) -> bool:
+    def flash_firmware(
+        self, firmware_dir: Path, rawprogram: Path, patch: Optional[Path] = None
+    ) -> bool:
         """
         Flash complete firmware via EDL
 
@@ -190,7 +196,7 @@ class EDLFlasher:
         print(f"  - Requires matching firmware for your device")
 
         confirm = input("\nType 'I UNDERSTAND THE RISKS' to continue: ")
-        if confirm != 'I UNDERSTAND THE RISKS':
+        if confirm != "I UNDERSTAND THE RISKS":
             print("Cancelled by user")
             return False
 
@@ -248,11 +254,11 @@ class EDLFlasher:
 
         # This would query device via Firehose
         info = {
-            'platform': 'Unknown',
-            'emmc_size': 'Unknown',
-            'ram_size': 'Unknown',
-            'secure_boot': 'Unknown',
-            'device_serial': 'Unknown'
+            "platform": "Unknown",
+            "emmc_size": "Unknown",
+            "ram_size": "Unknown",
+            "secure_boot": "Unknown",
+            "device_serial": "Unknown",
         }
 
         print(f"   Platform: {info['platform']}")
@@ -272,21 +278,21 @@ class QualcommChipDetector:
 
     SNAPDRAGON_CHIPS = {
         # Snapdragon 2xx series
-        'SM4125': {'series': '400', 'name': 'Snapdragon 460', 'cores': 8, 'process': '11nm'},
-        'SM6125': {'series': '600', 'name': 'Snapdragon 665', 'cores': 8, 'process': '11nm'},
-        'SM6150': {'series': '600', 'name': 'Snapdragon 675', 'cores': 8, 'process': '11nm'},
-        'SM7125': {'series': '700', 'name': 'Snapdragon 720G', 'cores': 8, 'process': '8nm'},
-        'SM7150': {'series': '700', 'name': 'Snapdragon 730', 'cores': 8, 'process': '8nm'},
-        'SM7250': {'series': '700', 'name': 'Snapdragon 765', 'cores': 8, 'process': '7nm'},
-        'SM7325': {'series': '700', 'name': 'Snapdragon 778G', 'cores': 8, 'process': '6nm'},
-        'SM7450': {'series': '700', 'name': 'Snapdragon 7 Gen 1', 'cores': 8, 'process': '4nm'},
-        'SM8150': {'series': '800', 'name': 'Snapdragon 855', 'cores': 8, 'process': '7nm'},
-        'SM8250': {'series': '800', 'name': 'Snapdragon 865', 'cores': 8, 'process': '7nm'},
-        'SM8350': {'series': '800', 'name': 'Snapdragon 888', 'cores': 8, 'process': '5nm'},
-        'SM8450': {'series': '800', 'name': 'Snapdragon 8 Gen 1', 'cores': 8, 'process': '4nm'},
-        'SM8475': {'series': '800', 'name': 'Snapdragon 8+ Gen 1', 'cores': 8, 'process': '4nm'},
-        'SM8550': {'series': '800', 'name': 'Snapdragon 8 Gen 2', 'cores': 8, 'process': '4nm'},
-        'SM8650': {'series': '800', 'name': 'Snapdragon 8 Gen 3', 'cores': 8, 'process': '4nm'},
+        "SM4125": {"series": "400", "name": "Snapdragon 460", "cores": 8, "process": "11nm"},
+        "SM6125": {"series": "600", "name": "Snapdragon 665", "cores": 8, "process": "11nm"},
+        "SM6150": {"series": "600", "name": "Snapdragon 675", "cores": 8, "process": "11nm"},
+        "SM7125": {"series": "700", "name": "Snapdragon 720G", "cores": 8, "process": "8nm"},
+        "SM7150": {"series": "700", "name": "Snapdragon 730", "cores": 8, "process": "8nm"},
+        "SM7250": {"series": "700", "name": "Snapdragon 765", "cores": 8, "process": "7nm"},
+        "SM7325": {"series": "700", "name": "Snapdragon 778G", "cores": 8, "process": "6nm"},
+        "SM7450": {"series": "700", "name": "Snapdragon 7 Gen 1", "cores": 8, "process": "4nm"},
+        "SM8150": {"series": "800", "name": "Snapdragon 855", "cores": 8, "process": "7nm"},
+        "SM8250": {"series": "800", "name": "Snapdragon 865", "cores": 8, "process": "7nm"},
+        "SM8350": {"series": "800", "name": "Snapdragon 888", "cores": 8, "process": "5nm"},
+        "SM8450": {"series": "800", "name": "Snapdragon 8 Gen 1", "cores": 8, "process": "4nm"},
+        "SM8475": {"series": "800", "name": "Snapdragon 8+ Gen 1", "cores": 8, "process": "4nm"},
+        "SM8550": {"series": "800", "name": "Snapdragon 8 Gen 2", "cores": 8, "process": "4nm"},
+        "SM8650": {"series": "800", "name": "Snapdragon 8 Gen 3", "cores": 8, "process": "4nm"},
     }
 
     @classmethod
@@ -294,11 +300,11 @@ class QualcommChipDetector:
         """Detect Qualcomm chip from device properties"""
         for chip_id, info in cls.SNAPDRAGON_CHIPS.items():
             if chip_id.lower() in device_prop.lower():
-                return {'chip_id': chip_id, **info}
+                return {"chip_id": chip_id, **info}
 
         # Try to extract from common patterns
-        if 'snapdragon' in device_prop.lower():
-            return {'chip_id': 'Unknown', 'name': device_prop, 'series': 'Unknown'}
+        if "snapdragon" in device_prop.lower():
+            return {"chip_id": "Unknown", "name": device_prop, "series": "Unknown"}
 
         return None
 

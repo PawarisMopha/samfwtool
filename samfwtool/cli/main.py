@@ -5,6 +5,7 @@ Advanced command-line interface surpassing Odin
 Author: SamFWTool Team
 License: MIT
 """
+
 from typing import Optional
 import click
 import sys
@@ -65,8 +66,8 @@ def cli():
 
 
 @cli.command()
-@click.argument('firmware_path', type=click.Path(exists=True))
-@click.option('--detailed', '-d', is_flag=True, help='Show detailed partition information')
+@click.argument("firmware_path", type=click.Path(exists=True))
+@click.option("--detailed", "-d", is_flag=True, help="Show detailed partition information")
 def info(firmware_path: str, detailed: bool) -> None:
     """
     Display firmware information
@@ -85,7 +86,9 @@ def info(firmware_path: str, detailed: bool) -> None:
         console.print(f"[green]Vendor:[/green] {firmware_info.vendor}")
         console.print(f"[green]Device:[/green] {firmware_info.device}")
         console.print(f"[green]Version:[/green] {firmware_info.version}")
-        console.print(f"[green]Size:[/green] {firmware_info.size:,} bytes ({firmware_info.size/(1024*1024):.2f} MB)")
+        console.print(
+            f"[green]Size:[/green] {firmware_info.size:,} bytes ({firmware_info.size/(1024*1024):.2f} MB)"
+        )
         console.print(f"[green]Checksum:[/green] {firmware_info.checksum}")
 
         if firmware_info.security_patch:
@@ -106,12 +109,7 @@ def info(firmware_path: str, detailed: bool) -> None:
 
         for partition in firmware_info.partitions:
             size_mb = f"{partition.size/(1024*1024):.2f} MB"
-            row = [
-                partition.name,
-                partition.type,
-                size_mb,
-                partition.format
-            ]
+            row = [partition.name, partition.type, size_mb, partition.format]
 
             if detailed:
                 row.append(partition.compression or "none")
@@ -127,10 +125,10 @@ def info(firmware_path: str, detailed: bool) -> None:
 
 
 @cli.command()
-@click.argument('firmware_path', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), required=True, help='Output directory')
-@click.option('--partition', '-p', help='Extract specific partition only')
-@click.option('--decompress/--no-decompress', default=True, help='Automatically decompress files')
+@click.argument("firmware_path", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), required=True, help="Output directory")
+@click.option("--partition", "-p", help="Extract specific partition only")
+@click.option("--decompress/--no-decompress", default=True, help="Automatically decompress files")
 def extract(firmware_path, output, partition, decompress):
     """
     Extract firmware contents
@@ -162,9 +160,9 @@ def extract(firmware_path, output, partition, decompress):
 
 
 @cli.command()
-@click.argument('firmware_dir', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), help='Output report path (JSON)')
-@click.option('--deep', is_flag=True, help='Perform deep security analysis')
+@click.argument("firmware_dir", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), help="Output report path (JSON)")
+@click.option("--deep", is_flag=True, help="Perform deep security analysis")
 def scan(firmware_dir, output, deep):
     """
     Security scan firmware
@@ -186,7 +184,8 @@ def scan(firmware_dir, output, deep):
 
         # Return non-zero exit code if critical/high findings
         critical_high = [
-            f for f in findings
+            f
+            for f in findings
             if f.severity in (VulnerabilitySeverity.CRITICAL, VulnerabilitySeverity.HIGH)
         ]
         if critical_high:
@@ -198,9 +197,9 @@ def scan(firmware_dir, output, deep):
 
 
 @cli.command()
-@click.argument('old_firmware', type=click.Path(exists=True))
-@click.argument('new_firmware', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), help='Output diff report (JSON)')
+@click.argument("old_firmware", type=click.Path(exists=True))
+@click.argument("new_firmware", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), help="Output diff report (JSON)")
 def diff(old_firmware, new_firmware, output):
     """
     Compare two firmware versions
@@ -223,10 +222,10 @@ def diff(old_firmware, new_firmware, output):
 
 
 @cli.command()
-@click.argument('boot_image', type=click.Path(exists=True))
-@click.option('--extract-kernel', type=click.Path(), help='Extract kernel to file')
-@click.option('--extract-ramdisk', type=click.Path(), help='Extract ramdisk to file')
-@click.option('--info', is_flag=True, help='Show boot image information')
+@click.argument("boot_image", type=click.Path(exists=True))
+@click.option("--extract-kernel", type=click.Path(), help="Extract kernel to file")
+@click.option("--extract-ramdisk", type=click.Path(), help="Extract ramdisk to file")
+@click.option("--info", is_flag=True, help="Show boot image information")
 def bootimg(boot_image, extract_kernel, extract_ramdisk, info):
     """
     Analyze and manipulate boot images
@@ -257,9 +256,11 @@ def bootimg(boot_image, extract_kernel, extract_ramdisk, info):
 
 
 @cli.command()
-@click.argument('files', nargs=-1, type=click.Path(exists=True), required=True)
-@click.option('--output', '-o', type=click.Path(), required=True, help='Output firmware file')
-@click.option('--format', '-f', type=click.Choice(['tar', 'tar.md5']), default='tar.md5', help='Output format')
+@click.argument("files", nargs=-1, type=click.Path(exists=True), required=True)
+@click.option("--output", "-o", type=click.Path(), required=True, help="Output firmware file")
+@click.option(
+    "--format", "-f", type=click.Choice(["tar", "tar.md5"]), default="tar.md5", help="Output format"
+)
 def pack(files, output, format):
     """
     Pack partitions into firmware file
@@ -272,7 +273,7 @@ def pack(files, output, format):
     try:
         from samfwtool.core.parser import FirmwareFormat
 
-        fmt = FirmwareFormat.TAR_MD5 if format == 'tar.md5' else FirmwareFormat.TAR
+        fmt = FirmwareFormat.TAR_MD5 if format == "tar.md5" else FirmwareFormat.TAR
         file_paths = [Path(f) for f in files]
 
         console.print(f"[yellow]Files to pack:[/yellow] {len(file_paths)}")
@@ -297,7 +298,12 @@ def pack(files, output, format):
 
 
 @cli.command()
-@click.option('--mode', type=click.Choice(['adb', 'fastboot', 'download', 'all']), default='all', help='Detection mode')
+@click.option(
+    "--mode",
+    type=click.Choice(["adb", "fastboot", "download", "all"]),
+    default="all",
+    help="Detection mode",
+)
 def devices(mode):
     """
     Detect connected devices
@@ -307,22 +313,24 @@ def devices(mode):
     console.print(f"\n[bold cyan]Detecting devices...[/bold cyan]\n")
 
     try:
-        if mode == 'all' or mode == 'adb':
+        if mode == "all" or mode == "adb":
             adb_devices = DeviceDetector.detect_adb_devices()
             if adb_devices:
                 console.print(f"[green]ADB Devices ({len(adb_devices)}):[/green]")
                 for dev in adb_devices:
                     console.print(f"  • {dev.model} - {dev.serial}")
-                    console.print(f"    Bootloader: {'LOCKED' if dev.bootloader_locked else 'UNLOCKED'}")
+                    console.print(
+                        f"    Bootloader: {'LOCKED' if dev.bootloader_locked else 'UNLOCKED'}"
+                    )
 
-        if mode == 'all' or mode == 'fastboot':
+        if mode == "all" or mode == "fastboot":
             fb_devices = DeviceDetector.detect_fastboot_devices()
             if fb_devices:
                 console.print(f"\n[green]Fastboot Devices ({len(fb_devices)}):[/green]")
                 for dev in fb_devices:
                     console.print(f"  • {dev.model} - {dev.serial}")
 
-        if mode == 'all' or mode == 'download':
+        if mode == "all" or mode == "download":
             dl_devices = DeviceDetector.detect_samsung_download_mode()
             if dl_devices:
                 console.print(f"\n[green]Samsung Download Mode ({len(dl_devices)}):[/green]")
@@ -343,10 +351,12 @@ def devices(mode):
 
 
 @cli.command()
-@click.option('--serial', '-s', help='Device serial number')
-@click.option('--partition', '-p', required=True, help='Partition to flash (boot, system, etc.)')
-@click.option('--image', '-i', type=click.Path(exists=True), required=True, help='Image file to flash')
-@click.option('--no-safety-checks', is_flag=True, help='Disable safety checks (DANGEROUS)')
+@click.option("--serial", "-s", help="Device serial number")
+@click.option("--partition", "-p", required=True, help="Partition to flash (boot, system, etc.)")
+@click.option(
+    "--image", "-i", type=click.Path(exists=True), required=True, help="Image file to flash"
+)
+@click.option("--no-safety-checks", is_flag=True, help="Disable safety checks (DANGEROUS)")
 def flash(serial, partition, image, no_safety_checks):
     """
     Flash partition to device
@@ -396,9 +406,9 @@ def flash(serial, partition, image, no_safety_checks):
 
 
 @cli.command()
-@click.option('--serial', '-s', help='Device serial number')
-@click.option('--partition', '-p', required=True, help='Partition to backup')
-@click.option('--output', '-o', type=click.Path(), required=True, help='Output file')
+@click.option("--serial", "-s", help="Device serial number")
+@click.option("--partition", "-p", required=True, help="Partition to backup")
+@click.option("--output", "-o", type=click.Path(), required=True, help="Output file")
 def backup(serial, partition, output):
     """
     Backup partition from device
@@ -413,7 +423,9 @@ def backup(serial, partition, output):
             console.print("[red]No devices detected[/red]")
             sys.exit(1)
 
-        device = devices[0] if not serial else next((d for d in devices if d.serial == serial), None)
+        device = (
+            devices[0] if not serial else next((d for d in devices if d.serial == serial), None)
+        )
         if not device:
             console.print(f"[red]Device not found[/red]")
             sys.exit(1)
@@ -433,8 +445,8 @@ def backup(serial, partition, output):
 
 
 @cli.command()
-@click.argument('firmware_dir', type=click.Path(exists=True))
-@click.option('--output', '-o', type=click.Path(), help='Output report path (JSON)')
+@click.argument("firmware_dir", type=click.Path(exists=True))
+@click.option("--output", "-o", type=click.Path(), help="Output report path (JSON)")
 def frp(firmware_dir, output):
     """
     Analyze Factory Reset Protection (FRP)
@@ -453,7 +465,7 @@ def frp(firmware_dir, output):
             analyzer.export_report(Path(output))
 
         # Exit code based on findings
-        critical = [f for f in findings if f.severity == 'CRITICAL']
+        critical = [f for f in findings if f.severity == "CRITICAL"]
         if critical:
             sys.exit(len(critical))
 
@@ -463,9 +475,9 @@ def frp(firmware_dir, output):
 
 
 @cli.command()
-@click.argument('scatter_file', type=click.Path(exists=True))
-@click.option('--firmware-dir', '-f', type=click.Path(exists=True), help='Firmware directory')
-@click.option('--info', is_flag=True, help='Show scatter file info')
+@click.argument("scatter_file", type=click.Path(exists=True))
+@click.option("--firmware-dir", "-f", type=click.Path(exists=True), help="Firmware directory")
+@click.option("--info", is_flag=True, help="Show scatter file info")
 def mtk(scatter_file, firmware_dir, info):
     """
     MediaTek (MTK) tools - SP Flash Tool equivalent
@@ -493,10 +505,10 @@ def mtk(scatter_file, firmware_dir, info):
 
 
 @cli.command()
-@click.option('--port', '-p', default='/dev/ttyUSB0', help='EDL port (e.g., /dev/ttyUSB0, COM3)')
-@click.option('--rawprogram', '-r', type=click.Path(exists=True), help='Rawprogram XML file')
-@click.option('--firmware-dir', '-f', type=click.Path(exists=True), help='Firmware directory')
-@click.option('--info', is_flag=True, help='Show device info')
+@click.option("--port", "-p", default="/dev/ttyUSB0", help="EDL port (e.g., /dev/ttyUSB0, COM3)")
+@click.option("--rawprogram", "-r", type=click.Path(exists=True), help="Rawprogram XML file")
+@click.option("--firmware-dir", "-f", type=click.Path(exists=True), help="Firmware directory")
+@click.option("--info", is_flag=True, help="Show device info")
 def edl(port, rawprogram, firmware_dir, info):
     """
     Qualcomm EDL tools - QFIL equivalent
@@ -567,5 +579,5 @@ def compare():
     console.print("[bold green]and functionality than Samsung's Odin.[/bold green]\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

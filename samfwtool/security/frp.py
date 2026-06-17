@@ -10,6 +10,7 @@ This module:
 - Checks for known FRP bypass methods
 - Validates Google Account bindings
 """
+
 import re
 import sqlite3
 from pathlib import Path
@@ -20,6 +21,7 @@ from enum import Enum
 
 class FRPStatus(Enum):
     """FRP protection status"""
+
     ENABLED = "enabled"
     DISABLED = "disabled"
     BYPASSED = "bypassed"
@@ -29,6 +31,7 @@ class FRPStatus(Enum):
 
 class FRPBypassMethod(Enum):
     """Known FRP bypass methods"""
+
     ADB_ENABLED = "adb_enabled"  # ADB left enabled
     INSECURE_SETTINGS = "insecure_settings"  # Settings accessible
     OEM_UNLOCK = "oem_unlock_enabled"  # OEM unlock enabled
@@ -44,6 +47,7 @@ class FRPBypassMethod(Enum):
 @dataclass
 class FRPFinding:
     """FRP security finding"""
+
     status: FRPStatus
     bypass_method: Optional[FRPBypassMethod]
     severity: str  # critical, high, medium, low
@@ -71,7 +75,7 @@ class FRPAnalyzer:
             List of FRP findings
         """
         print("\n🔒 Factory Reset Protection (FRP) Analysis")
-        print("="*70)
+        print("=" * 70)
 
         self.findings = []
 
@@ -103,9 +107,9 @@ class FRPAnalyzer:
         print("\n[1/6] Checking build properties...")
 
         build_props = [
-            'system/build.prop',
-            'vendor/build.prop',
-            'product/build.prop',
+            "system/build.prop",
+            "vendor/build.prop",
+            "product/build.prop",
         ]
 
         for prop_file in build_props:
@@ -114,54 +118,62 @@ class FRPAnalyzer:
                 continue
 
             try:
-                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
 
                 # Check for debug build
-                if re.search(r'ro\.debuggable\s*=\s*1', content):
-                    self.findings.append(FRPFinding(
-                        status=FRPStatus.VULNERABLE,
-                        bypass_method=FRPBypassMethod.DEBUG_BUILD,
-                        severity='HIGH',
-                        description='Debug build detected - FRP can be bypassed via debugging',
-                        location=str(prop_file),
-                        remediation='Build with ro.debuggable=0 for production'
-                    ))
+                if re.search(r"ro\.debuggable\s*=\s*1", content):
+                    self.findings.append(
+                        FRPFinding(
+                            status=FRPStatus.VULNERABLE,
+                            bypass_method=FRPBypassMethod.DEBUG_BUILD,
+                            severity="HIGH",
+                            description="Debug build detected - FRP can be bypassed via debugging",
+                            location=str(prop_file),
+                            remediation="Build with ro.debuggable=0 for production",
+                        )
+                    )
 
                 # Check for test keys
-                if re.search(r'ro\.build\.tags\s*=\s*test-keys', content):
-                    self.findings.append(FRPFinding(
-                        status=FRPStatus.VULNERABLE,
-                        bypass_method=FRPBypassMethod.TEST_KEYS,
-                        severity='CRITICAL',
-                        description='Test keys detected - production builds should use release keys',
-                        location=str(prop_file),
-                        remediation='Sign with release keys for production'
-                    ))
+                if re.search(r"ro\.build\.tags\s*=\s*test-keys", content):
+                    self.findings.append(
+                        FRPFinding(
+                            status=FRPStatus.VULNERABLE,
+                            bypass_method=FRPBypassMethod.TEST_KEYS,
+                            severity="CRITICAL",
+                            description="Test keys detected - production builds should use release keys",
+                            location=str(prop_file),
+                            remediation="Sign with release keys for production",
+                        )
+                    )
 
                 # Check for OEM unlock
-                if re.search(r'ro\.oem_unlock_supported\s*=\s*1', content):
-                    oem_by_default = re.search(r'ro\.oem_unlock_enabled\s*=\s*1', content)
+                if re.search(r"ro\.oem_unlock_supported\s*=\s*1", content):
+                    oem_by_default = re.search(r"ro\.oem_unlock_enabled\s*=\s*1", content)
                     if oem_by_default:
-                        self.findings.append(FRPFinding(
-                            status=FRPStatus.VULNERABLE,
-                            bypass_method=FRPBypassMethod.OEM_UNLOCK,
-                            severity='HIGH',
-                            description='OEM unlock enabled by default',
-                            location=str(prop_file),
-                            remediation='Disable OEM unlock by default'
-                        ))
+                        self.findings.append(
+                            FRPFinding(
+                                status=FRPStatus.VULNERABLE,
+                                bypass_method=FRPBypassMethod.OEM_UNLOCK,
+                                severity="HIGH",
+                                description="OEM unlock enabled by default",
+                                location=str(prop_file),
+                                remediation="Disable OEM unlock by default",
+                            )
+                        )
 
                 # Check for ADB enabled
-                if re.search(r'persist\.sys\.usb\.config\s*=\s*.*adb', content):
-                    self.findings.append(FRPFinding(
-                        status=FRPStatus.VULNERABLE,
-                        bypass_method=FRPBypassMethod.ADB_ENABLED,
-                        severity='CRITICAL',
-                        description='ADB enabled by default - allows FRP bypass',
-                        location=str(prop_file),
-                        remediation='Disable ADB by default in production'
-                    ))
+                if re.search(r"persist\.sys\.usb\.config\s*=\s*.*adb", content):
+                    self.findings.append(
+                        FRPFinding(
+                            status=FRPStatus.VULNERABLE,
+                            bypass_method=FRPBypassMethod.ADB_ENABLED,
+                            severity="CRITICAL",
+                            description="ADB enabled by default - allows FRP bypass",
+                            location=str(prop_file),
+                            remediation="Disable ADB by default in production",
+                        )
+                    )
 
             except Exception as e:
                 print(f"⚠️  Error reading {prop_file}: {e}")
@@ -171,27 +183,29 @@ class FRPAnalyzer:
         print("[2/6] Checking FRP partition...")
 
         # Common FRP partition names
-        frp_partitions = ['frp', 'persistent', 'config', 'devinfo']
+        frp_partitions = ["frp", "persistent", "config", "devinfo"]
 
         # Check in system or extracted files
         found_frp = False
 
         for partition in frp_partitions:
             # Check for partition files
-            partition_files = list(self.firmware_dir.rglob(f'*{partition}*.img'))
+            partition_files = list(self.firmware_dir.rglob(f"*{partition}*.img"))
             if partition_files:
                 found_frp = True
                 print(f"  ✓ FRP partition found: {partition_files[0].name}")
                 break
 
         if not found_frp:
-            self.findings.append(FRPFinding(
-                status=FRPStatus.VULNERABLE,
-                bypass_method=FRPBypassMethod.NO_FRP_PARTITION,
-                severity='CRITICAL',
-                description='FRP partition not found in firmware',
-                remediation='Ensure FRP partition exists and is properly configured'
-            ))
+            self.findings.append(
+                FRPFinding(
+                    status=FRPStatus.VULNERABLE,
+                    bypass_method=FRPBypassMethod.NO_FRP_PARTITION,
+                    severity="CRITICAL",
+                    description="FRP partition not found in firmware",
+                    remediation="Ensure FRP partition exists and is properly configured",
+                )
+            )
             print(f"  ❌ FRP partition not found")
 
     def _check_persistent_data(self):
@@ -200,9 +214,9 @@ class FRPAnalyzer:
 
         # Locations that should persist after factory reset
         persistent_paths = [
-            'persistent/data',
-            'frp/data',
-            'metadata/frp',
+            "persistent/data",
+            "frp/data",
+            "metadata/frp",
         ]
 
         for path in persistent_paths:
@@ -215,38 +229,44 @@ class FRPAnalyzer:
         print("[4/6] Checking for bypass vulnerabilities...")
 
         # Check for Quick Shortcut Maker (known bypass tool)
-        qsm_files = list(self.firmware_dir.rglob('*QuickShortcutMaker*'))
+        qsm_files = list(self.firmware_dir.rglob("*QuickShortcutMaker*"))
         if qsm_files:
-            self.findings.append(FRPFinding(
-                status=FRPStatus.VULNERABLE,
-                bypass_method=FRPBypassMethod.QUICK_SHORTCUT_MAKER,
-                severity='HIGH',
-                description='Quick Shortcut Maker found - known FRP bypass tool',
-                location=str(qsm_files[0]),
-                remediation='Remove Quick Shortcut Maker from production builds'
-            ))
+            self.findings.append(
+                FRPFinding(
+                    status=FRPStatus.VULNERABLE,
+                    bypass_method=FRPBypassMethod.QUICK_SHORTCUT_MAKER,
+                    severity="HIGH",
+                    description="Quick Shortcut Maker found - known FRP bypass tool",
+                    location=str(qsm_files[0]),
+                    remediation="Remove Quick Shortcut Maker from production builds",
+                )
+            )
 
         # Check for TalkBack (accessibility bypass)
         talkback_accessible = self._check_talkback_accessible()
         if talkback_accessible:
-            self.findings.append(FRPFinding(
-                status=FRPStatus.VULNERABLE,
-                bypass_method=FRPBypassMethod.TALKBACK_BYPASS,
-                severity='MEDIUM',
-                description='TalkBack accessible during setup - potential bypass vector',
-                remediation='Restrict TalkBack access during FRP lock'
-            ))
+            self.findings.append(
+                FRPFinding(
+                    status=FRPStatus.VULNERABLE,
+                    bypass_method=FRPBypassMethod.TALKBACK_BYPASS,
+                    severity="MEDIUM",
+                    description="TalkBack accessible during setup - potential bypass vector",
+                    remediation="Restrict TalkBack access during FRP lock",
+                )
+            )
 
         # Check for Settings accessibility
         settings_accessible = self._check_settings_accessible()
         if settings_accessible:
-            self.findings.append(FRPFinding(
-                status=FRPStatus.VULNERABLE,
-                bypass_method=FRPBypassMethod.INSECURE_SETTINGS,
-                severity='HIGH',
-                description='Settings accessible during FRP lock',
-                remediation='Lock down Settings during device setup'
-            ))
+            self.findings.append(
+                FRPFinding(
+                    status=FRPStatus.VULNERABLE,
+                    bypass_method=FRPBypassMethod.INSECURE_SETTINGS,
+                    severity="HIGH",
+                    description="Settings accessible during FRP lock",
+                    remediation="Lock down Settings during device setup",
+                )
+            )
 
     def _check_google_accounts(self):
         """Check for Google Account data"""
@@ -254,9 +274,9 @@ class FRPAnalyzer:
 
         # Common Google Account database locations
         account_dbs = [
-            'data/system/accounts.db',
-            'data/system_ce/0/accounts_ce.db',
-            'data/system_de/0/accounts_de.db',
+            "data/system/accounts.db",
+            "data/system_ce/0/accounts_ce.db",
+            "data/system_de/0/accounts_de.db",
         ]
 
         for db_path in account_dbs:
@@ -280,13 +300,15 @@ class FRPAnalyzer:
                             google_accounts = cursor.fetchone()[0]
 
                             if google_accounts > 0:
-                                self.findings.append(FRPFinding(
-                                    status=FRPStatus.ENABLED,
-                                    bypass_method=None,
-                                    severity='INFO',
-                                    description=f'FRP enabled: {google_accounts} Google account(s) bound',
-                                    location=str(db_path)
-                                ))
+                                self.findings.append(
+                                    FRPFinding(
+                                        status=FRPStatus.ENABLED,
+                                        bypass_method=None,
+                                        severity="INFO",
+                                        description=f"FRP enabled: {google_accounts} Google account(s) bound",
+                                        location=str(db_path),
+                                    )
+                                )
                                 print(f"    Google accounts: {google_accounts} (FRP active)")
 
                         except (KeyError, ValueError, TypeError) as e:
@@ -303,23 +325,23 @@ class FRPAnalyzer:
         print("[6/6] Checking system settings...")
 
         settings_dbs = [
-            'data/system/users/0/settings_global.xml',
-            'data/system/users/0/settings_secure.xml',
-            'data/system/users/0/settings_system.xml',
+            "data/system/users/0/settings_global.xml",
+            "data/system/users/0/settings_secure.xml",
+            "data/system/users/0/settings_system.xml",
         ]
 
         for settings_file in settings_dbs:
             full_path = self.firmware_dir / settings_file
             if full_path.exists():
                 try:
-                    with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
                         content = f.read()
 
                     # Check for relevant settings
-                    if 'development_settings_enabled' in content:
+                    if "development_settings_enabled" in content:
                         print(f"  ⚠️  Developer settings may be enabled")
 
-                    if 'adb_enabled' in content:
+                    if "adb_enabled" in content:
                         print(f"  ⚠️  ADB setting present in settings")
 
                 except Exception as e:
@@ -337,9 +359,9 @@ class FRPAnalyzer:
 
     def _print_summary(self):
         """Print FRP analysis summary"""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("FRP ANALYSIS SUMMARY")
-        print("="*70)
+        print("=" * 70)
 
         if not self.findings:
             print("\n✅ No FRP issues detected")
@@ -347,11 +369,11 @@ class FRPAnalyzer:
             return
 
         # Count by severity
-        critical = [f for f in self.findings if f.severity == 'CRITICAL']
-        high = [f for f in self.findings if f.severity == 'HIGH']
-        medium = [f for f in self.findings if f.severity == 'MEDIUM']
-        low = [f for f in self.findings if f.severity == 'LOW']
-        info = [f for f in self.findings if f.severity == 'INFO']
+        critical = [f for f in self.findings if f.severity == "CRITICAL"]
+        high = [f for f in self.findings if f.severity == "HIGH"]
+        medium = [f for f in self.findings if f.severity == "MEDIUM"]
+        low = [f for f in self.findings if f.severity == "LOW"]
+        info = [f for f in self.findings if f.severity == "INFO"]
 
         print(f"\nTotal Findings: {len(self.findings)}")
         if critical:
@@ -368,9 +390,9 @@ class FRPAnalyzer:
         # Print critical and high findings
         important = critical + high
         if important:
-            print("\n" + "-"*70)
+            print("\n" + "-" * 70)
             print("CRITICAL & HIGH SEVERITY FINDINGS:")
-            print("-"*70)
+            print("-" * 70)
 
             for finding in important:
                 print(f"\n[{finding.severity}] {finding.status.value.upper()}")
@@ -387,22 +409,22 @@ class FRPAnalyzer:
         import json
 
         report = {
-            'firmware_path': str(self.firmware_dir),
-            'total_findings': len(self.findings),
-            'findings': [
+            "firmware_path": str(self.firmware_dir),
+            "total_findings": len(self.findings),
+            "findings": [
                 {
-                    'status': f.status.value,
-                    'bypass_method': f.bypass_method.value if f.bypass_method else None,
-                    'severity': f.severity,
-                    'description': f.description,
-                    'location': f.location,
-                    'remediation': f.remediation
+                    "status": f.status.value,
+                    "bypass_method": f.bypass_method.value if f.bypass_method else None,
+                    "severity": f.severity,
+                    "description": f.description,
+                    "location": f.location,
+                    "remediation": f.remediation,
                 }
                 for f in self.findings
-            ]
+            ],
         }
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(report, f, indent=2)
 
         print(f"\n✓ FRP analysis report exported: {output_file}")
@@ -414,7 +436,7 @@ class FRPAnalyzer:
 
         # Check for critical vulnerabilities
         for finding in self.findings:
-            if finding.status == FRPStatus.VULNERABLE and finding.severity == 'CRITICAL':
+            if finding.status == FRPStatus.VULNERABLE and finding.severity == "CRITICAL":
                 return FRPStatus.BYPASSED
 
         # Check for enabled FRP

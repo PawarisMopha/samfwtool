@@ -5,6 +5,7 @@ Advanced feature not available in Odin
 Author: SamFWTool Team
 License: MIT
 """
+
 import os
 import hashlib
 import difflib
@@ -25,6 +26,7 @@ __all__ = [
 
 class ChangeType(Enum):
     """Types of changes between firmware versions"""
+
     ADDED = "added"
     REMOVED = "removed"
     MODIFIED = "modified"
@@ -34,6 +36,7 @@ class ChangeType(Enum):
 @dataclass
 class FileDiff:
     """Represents a difference in a single file"""
+
     path: str
     change_type: ChangeType
     old_size: Optional[int] = None
@@ -46,6 +49,7 @@ class FileDiff:
 @dataclass
 class FirmwareDiffResult:
     """Complete firmware diff result"""
+
     old_version: str
     new_version: str
     files_added: List[FileDiff]
@@ -111,24 +115,28 @@ class FirmwareDiff:
             if filename in new_parts and filename not in old_parts:
                 # Added file
                 new_part = new_parts[filename]
-                files_added.append(FileDiff(
-                    path=filename,
-                    change_type=ChangeType.ADDED,
-                    new_size=new_part.size,
-                    new_hash=new_part.checksum,
-                    size_change=new_part.size
-                ))
+                files_added.append(
+                    FileDiff(
+                        path=filename,
+                        change_type=ChangeType.ADDED,
+                        new_size=new_part.size,
+                        new_hash=new_part.checksum,
+                        size_change=new_part.size,
+                    )
+                )
 
             elif filename in old_parts and filename not in new_parts:
                 # Removed file
                 old_part = old_parts[filename]
-                files_removed.append(FileDiff(
-                    path=filename,
-                    change_type=ChangeType.REMOVED,
-                    old_size=old_part.size,
-                    old_hash=old_part.checksum,
-                    size_change=-old_part.size
-                ))
+                files_removed.append(
+                    FileDiff(
+                        path=filename,
+                        change_type=ChangeType.REMOVED,
+                        old_size=old_part.size,
+                        old_hash=old_part.checksum,
+                        size_change=-old_part.size,
+                    )
+                )
 
             else:
                 # Exists in both - check if modified
@@ -137,34 +145,38 @@ class FirmwareDiff:
 
                 if old_part.size != new_part.size or old_part.checksum != new_part.checksum:
                     # Modified
-                    files_modified.append(FileDiff(
-                        path=filename,
-                        change_type=ChangeType.MODIFIED,
-                        old_size=old_part.size,
-                        new_size=new_part.size,
-                        old_hash=old_part.checksum,
-                        new_hash=new_part.checksum,
-                        size_change=new_part.size - old_part.size
-                    ))
+                    files_modified.append(
+                        FileDiff(
+                            path=filename,
+                            change_type=ChangeType.MODIFIED,
+                            old_size=old_part.size,
+                            new_size=new_part.size,
+                            old_hash=old_part.checksum,
+                            new_hash=new_part.checksum,
+                            size_change=new_part.size - old_part.size,
+                        )
+                    )
                 else:
                     # Unchanged
                     files_unchanged_count += 1
 
         # Calculate total size change
-        total_size_change = sum(f.size_change or 0 for f in files_added + files_removed + files_modified)
+        total_size_change = sum(
+            f.size_change or 0 for f in files_added + files_removed + files_modified
+        )
 
         # Create summary
         summary = {
-            'total_files_old': len(old_parts),
-            'total_files_new': len(new_parts),
-            'files_added': len(files_added),
-            'files_removed': len(files_removed),
-            'files_modified': len(files_modified),
-            'files_unchanged': files_unchanged_count,
-            'size_change_bytes': total_size_change,
-            'size_change_mb': total_size_change / (1024 * 1024),
-            'old_version': old_info.version,
-            'new_version': new_info.version,
+            "total_files_old": len(old_parts),
+            "total_files_new": len(new_parts),
+            "files_added": len(files_added),
+            "files_removed": len(files_removed),
+            "files_modified": len(files_modified),
+            "files_unchanged": files_unchanged_count,
+            "size_change_bytes": total_size_change,
+            "size_change_mb": total_size_change / (1024 * 1024),
+            "old_version": old_info.version,
+            "new_version": new_info.version,
         }
 
         result = FirmwareDiffResult(
@@ -175,7 +187,7 @@ class FirmwareDiff:
             files_modified=files_modified,
             files_unchanged=files_unchanged_count,
             total_size_change=total_size_change,
-            summary=summary
+            summary=summary,
         )
 
         self._print_diff_summary(result)
@@ -183,9 +195,9 @@ class FirmwareDiff:
 
     def _print_diff_summary(self, result: FirmwareDiffResult):
         """Print diff summary"""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("FIRMWARE DIFF SUMMARY")
-        print("="*70)
+        print("=" * 70)
 
         print(f"\nVersion Change: {result.old_version} → {result.new_version}")
         print(f"\nFiles Changed:")
@@ -194,13 +206,15 @@ class FirmwareDiff:
         print(f"  Modified:  {len(result.files_modified)}")
         print(f"  Unchanged: {result.files_unchanged}")
 
-        print(f"\nSize Change: {result.total_size_change:+,} bytes ({result.total_size_change/(1024*1024):+.2f} MB)")
+        print(
+            f"\nSize Change: {result.total_size_change:+,} bytes ({result.total_size_change/(1024*1024):+.2f} MB)"
+        )
 
         # Show added files
         if result.files_added:
-            print("\n" + "-"*70)
+            print("\n" + "-" * 70)
             print("ADDED FILES:")
-            print("-"*70)
+            print("-" * 70)
             for diff in result.files_added[:10]:  # Show first 10
                 print(f"  + {diff.path} ({diff.new_size:,} bytes)")
             if len(result.files_added) > 10:
@@ -208,9 +222,9 @@ class FirmwareDiff:
 
         # Show removed files
         if result.files_removed:
-            print("\n" + "-"*70)
+            print("\n" + "-" * 70)
             print("REMOVED FILES:")
-            print("-"*70)
+            print("-" * 70)
             for diff in result.files_removed[:10]:
                 print(f"  - {diff.path} ({diff.old_size:,} bytes)")
             if len(result.files_removed) > 10:
@@ -218,10 +232,12 @@ class FirmwareDiff:
 
         # Show modified files
         if result.files_modified:
-            print("\n" + "-"*70)
+            print("\n" + "-" * 70)
             print("MODIFIED FILES:")
-            print("-"*70)
-            for diff in sorted(result.files_modified, key=lambda x: abs(x.size_change or 0), reverse=True)[:10]:
+            print("-" * 70)
+            for diff in sorted(
+                result.files_modified, key=lambda x: abs(x.size_change or 0), reverse=True
+            )[:10]:
                 size_change = diff.size_change or 0
                 print(f"  ~ {diff.path} ({size_change:+,} bytes)")
             if len(result.files_modified) > 10:
@@ -234,21 +250,23 @@ class FirmwareDiff:
         result = self.compare()
 
         delta_info = {
-            'from_version': result.old_version,
-            'to_version': result.new_version,
-            'files_to_add': [f.path for f in result.files_added],
-            'files_to_remove': [f.path for f in result.files_removed],
-            'files_to_patch': [
+            "from_version": result.old_version,
+            "to_version": result.new_version,
+            "files_to_add": [f.path for f in result.files_added],
+            "files_to_remove": [f.path for f in result.files_removed],
+            "files_to_patch": [
                 {
-                    'path': f.path,
-                    'old_hash': f.old_hash,
-                    'new_hash': f.new_hash,
-                    'old_size': f.old_size,
-                    'new_size': f.new_size
+                    "path": f.path,
+                    "old_hash": f.old_hash,
+                    "new_hash": f.new_hash,
+                    "old_size": f.old_size,
+                    "new_size": f.new_size,
                 }
                 for f in result.files_modified
             ],
-            'estimated_delta_size': sum(f.new_size or 0 for f in result.files_added + result.files_modified)
+            "estimated_delta_size": sum(
+                f.new_size or 0 for f in result.files_added + result.files_modified
+            ),
         }
 
         return delta_info
@@ -260,39 +278,30 @@ class FirmwareDiff:
         result = self.compare()
 
         report = {
-            'old_version': result.old_version,
-            'new_version': result.new_version,
-            'summary': result.summary,
-            'added_files': [
-                {
-                    'path': f.path,
-                    'size': f.new_size,
-                    'hash': f.new_hash
-                }
-                for f in result.files_added
+            "old_version": result.old_version,
+            "new_version": result.new_version,
+            "summary": result.summary,
+            "added_files": [
+                {"path": f.path, "size": f.new_size, "hash": f.new_hash} for f in result.files_added
             ],
-            'removed_files': [
-                {
-                    'path': f.path,
-                    'size': f.old_size,
-                    'hash': f.old_hash
-                }
+            "removed_files": [
+                {"path": f.path, "size": f.old_size, "hash": f.old_hash}
                 for f in result.files_removed
             ],
-            'modified_files': [
+            "modified_files": [
                 {
-                    'path': f.path,
-                    'old_size': f.old_size,
-                    'new_size': f.new_size,
-                    'size_change': f.size_change,
-                    'old_hash': f.old_hash,
-                    'new_hash': f.new_hash
+                    "path": f.path,
+                    "old_size": f.old_size,
+                    "new_size": f.new_size,
+                    "size_change": f.size_change,
+                    "old_hash": f.old_hash,
+                    "new_hash": f.new_hash,
                 }
                 for f in result.files_modified
-            ]
+            ],
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
 
         print(f"\nDiff report exported to: {output_path}")

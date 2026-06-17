@@ -2,6 +2,7 @@
 SamFWTool - Comprehensive Tkinter GUI
 Professional firmware toolkit interface
 """
+
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 import tkinter.font as tkfont
@@ -40,17 +41,17 @@ class SamFWToolGUI:
 
         # Set theme colors
         self.colors = {
-            'primary': '#2196F3',
-            'success': '#4CAF50',
-            'warning': '#FF9800',
-            'danger': '#F44336',
-            'dark': '#212121',
-            'light': '#F5F5F5',
-            'text': '#FFFFFF'
+            "primary": "#2196F3",
+            "success": "#4CAF50",
+            "warning": "#FF9800",
+            "danger": "#F44336",
+            "dark": "#212121",
+            "light": "#F5F5F5",
+            "text": "#FFFFFF",
         }
 
         # Configure root window
-        self.root.configure(bg=self.colors['light'])
+        self.root.configure(bg=self.colors["light"])
 
         # Queue for thread communication
         self.message_queue = queue.Queue()
@@ -96,7 +97,7 @@ class SamFWToolGUI:
 
     def _create_header(self):
         """Create header section"""
-        header_frame = tk.Frame(self.root, bg=self.colors['primary'], height=80)
+        header_frame = tk.Frame(self.root, bg=self.colors["primary"], height=80)
         header_frame.pack(fill=tk.X, side=tk.TOP)
         header_frame.pack_propagate(False)
 
@@ -106,8 +107,8 @@ class SamFWToolGUI:
             header_frame,
             text="🚀 SamFWTool",
             font=title_font,
-            bg=self.colors['primary'],
-            fg=self.colors['text']
+            bg=self.colors["primary"],
+            fg=self.colors["text"],
         )
         title_label.pack(side=tk.LEFT, padx=20, pady=15)
 
@@ -117,8 +118,8 @@ class SamFWToolGUI:
             header_frame,
             text=f"Universal Firmware Toolkit v{__version__} | Surpassing ALL competitors",
             font=subtitle_font,
-            bg=self.colors['primary'],
-            fg=self.colors['text']
+            bg=self.colors["primary"],
+            fg=self.colors["text"],
         )
         subtitle_label.pack(side=tk.LEFT, padx=5, pady=20)
 
@@ -150,9 +151,15 @@ class SamFWToolGUI:
         file_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.analyze_file_var = tk.StringVar()
-        ttk.Entry(file_frame, textvariable=self.analyze_file_var, width=60).pack(side=tk.LEFT, padx=5)
-        ttk.Button(file_frame, text="Browse...", command=lambda: self._browse_file(self.analyze_file_var)).pack(side=tk.LEFT)
-        ttk.Button(file_frame, text="Analyze", command=self._analyze_firmware, style='Accent.TButton').pack(side=tk.LEFT, padx=5)
+        ttk.Entry(file_frame, textvariable=self.analyze_file_var, width=60).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(
+            file_frame, text="Browse...", command=lambda: self._browse_file(self.analyze_file_var)
+        ).pack(side=tk.LEFT)
+        ttk.Button(
+            file_frame, text="Analyze", command=self._analyze_firmware, style="Accent.TButton"
+        ).pack(side=tk.LEFT, padx=5)
 
         # Results area
         results_frame = ttk.LabelFrame(container, text="Analysis Results", padding=10)
@@ -174,29 +181,48 @@ class SamFWToolGUI:
         input_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.extract_input_var = tk.StringVar()
-        ttk.Entry(input_frame, textvariable=self.extract_input_var, width=50).pack(side=tk.LEFT, padx=5)
-        ttk.Button(input_frame, text="Browse...", command=lambda: self._browse_file(self.extract_input_var)).pack(side=tk.LEFT)
+        ttk.Entry(input_frame, textvariable=self.extract_input_var, width=50).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(
+            input_frame, text="Browse...", command=lambda: self._browse_file(self.extract_input_var)
+        ).pack(side=tk.LEFT)
 
         # Output directory
         output_frame = ttk.LabelFrame(container, text="Output Directory", padding=10)
         output_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.extract_output_var = tk.StringVar()
-        ttk.Entry(output_frame, textvariable=self.extract_output_var, width=50).pack(side=tk.LEFT, padx=5)
-        ttk.Button(output_frame, text="Browse...", command=lambda: self._browse_dir(self.extract_output_var)).pack(side=tk.LEFT)
+        ttk.Entry(output_frame, textvariable=self.extract_output_var, width=50).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(
+            output_frame,
+            text="Browse...",
+            command=lambda: self._browse_dir(self.extract_output_var),
+        ).pack(side=tk.LEFT)
 
         # Options
         options_frame = ttk.LabelFrame(container, text="Options", padding=10)
         options_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.extract_decompress_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(options_frame, text="Automatically decompress files", variable=self.extract_decompress_var).pack(anchor=tk.W)
+        ttk.Checkbutton(
+            options_frame,
+            text="Automatically decompress files",
+            variable=self.extract_decompress_var,
+        ).pack(anchor=tk.W)
 
         # Extract button
-        ttk.Button(container, text="Extract Firmware", command=self._extract_firmware, style='Accent.TButton').pack(pady=10)
+        ttk.Button(
+            container,
+            text="Extract Firmware",
+            command=self._extract_firmware,
+            style="Accent.TButton",
+        ).pack(pady=10)
 
         # Progress
-        self.extract_progress = ttk.Progressbar(container, mode='indeterminate')
+        self.extract_progress = ttk.Progressbar(container, mode="indeterminate")
         self.extract_progress.pack(fill=tk.X, pady=5)
 
         # Log
@@ -215,15 +241,15 @@ class SamFWToolGUI:
         container.pack(fill=tk.BOTH, expand=True)
 
         # Warning
-        warning_frame = tk.Frame(container, bg=self.colors['warning'], padx=10, pady=10)
+        warning_frame = tk.Frame(container, bg=self.colors["warning"], padx=10, pady=10)
         warning_frame.pack(fill=tk.X, pady=(0, 10))
 
         warning_label = tk.Label(
             warning_frame,
             text="⚠️  WARNING: Flashing can brick your device! Make sure you have the correct firmware.",
-            bg=self.colors['warning'],
-            fg=self.colors['text'],
-            font=tkfont.Font(weight="bold")
+            bg=self.colors["warning"],
+            fg=self.colors["text"],
+            font=tkfont.Font(weight="bold"),
         )
         warning_label.pack()
 
@@ -231,10 +257,14 @@ class SamFWToolGUI:
         device_frame = ttk.LabelFrame(container, text="Device", padding=10)
         device_frame.pack(fill=tk.X, pady=(0, 10))
 
-        ttk.Button(device_frame, text="Detect Devices", command=self._detect_devices).pack(side=tk.LEFT, padx=5)
+        ttk.Button(device_frame, text="Detect Devices", command=self._detect_devices).pack(
+            side=tk.LEFT, padx=5
+        )
 
         self.device_var = tk.StringVar()
-        self.device_combo = ttk.Combobox(device_frame, textvariable=self.device_var, width=40, state='readonly')
+        self.device_combo = ttk.Combobox(
+            device_frame, textvariable=self.device_var, width=40, state="readonly"
+        )
         self.device_combo.pack(side=tk.LEFT, padx=5)
 
         # Flash options
@@ -244,20 +274,30 @@ class SamFWToolGUI:
         ttk.Label(flash_frame, text="Partition:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         self.flash_partition_var = tk.StringVar()
         partition_combo = ttk.Combobox(flash_frame, textvariable=self.flash_partition_var, width=20)
-        partition_combo['values'] = ('boot', 'system', 'vendor', 'recovery', 'userdata')
+        partition_combo["values"] = ("boot", "system", "vendor", "recovery", "userdata")
         partition_combo.grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
 
-        ttk.Label(flash_frame, text="Image File:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(flash_frame, text="Image File:").grid(
+            row=1, column=0, sticky=tk.W, padx=5, pady=5
+        )
         self.flash_image_var = tk.StringVar()
-        ttk.Entry(flash_frame, textvariable=self.flash_image_var, width=40).grid(row=1, column=1, sticky=tk.W, padx=5, pady=5)
-        ttk.Button(flash_frame, text="Browse...", command=lambda: self._browse_file(self.flash_image_var)).grid(row=1, column=2, padx=5, pady=5)
+        ttk.Entry(flash_frame, textvariable=self.flash_image_var, width=40).grid(
+            row=1, column=1, sticky=tk.W, padx=5, pady=5
+        )
+        ttk.Button(
+            flash_frame, text="Browse...", command=lambda: self._browse_file(self.flash_image_var)
+        ).grid(row=1, column=2, padx=5, pady=5)
 
         # Safety check
         self.flash_safety_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(flash_frame, text="Enable safety checks (recommended)", variable=self.flash_safety_var).grid(row=2, column=0, columnspan=3, sticky=tk.W, padx=5, pady=5)
+        ttk.Checkbutton(
+            flash_frame, text="Enable safety checks (recommended)", variable=self.flash_safety_var
+        ).grid(row=2, column=0, columnspan=3, sticky=tk.W, padx=5, pady=5)
 
         # Flash button
-        ttk.Button(container, text="Flash Device", command=self._flash_device, style='Accent.TButton').pack(pady=10)
+        ttk.Button(
+            container, text="Flash Device", command=self._flash_device, style="Accent.TButton"
+        ).pack(pady=10)
 
         # Log
         log_frame = ttk.LabelFrame(container, text="Flash Log", padding=10)
@@ -279,26 +319,42 @@ class SamFWToolGUI:
         input_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.security_dir_var = tk.StringVar()
-        ttk.Entry(input_frame, textvariable=self.security_dir_var, width=50).pack(side=tk.LEFT, padx=5)
-        ttk.Button(input_frame, text="Browse...", command=lambda: self._browse_dir(self.security_dir_var)).pack(side=tk.LEFT)
+        ttk.Entry(input_frame, textvariable=self.security_dir_var, width=50).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(
+            input_frame, text="Browse...", command=lambda: self._browse_dir(self.security_dir_var)
+        ).pack(side=tk.LEFT)
 
         # Scan options
         options_frame = ttk.LabelFrame(container, text="Scan Options", padding=10)
         options_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.security_full_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(options_frame, text="Full Security Scan", variable=self.security_full_var).pack(anchor=tk.W)
+        ttk.Checkbutton(
+            options_frame, text="Full Security Scan", variable=self.security_full_var
+        ).pack(anchor=tk.W)
 
         self.security_frp_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(options_frame, text="FRP Analysis (Factory Reset Protection)", variable=self.security_frp_var).pack(anchor=tk.W)
+        ttk.Checkbutton(
+            options_frame,
+            text="FRP Analysis (Factory Reset Protection)",
+            variable=self.security_frp_var,
+        ).pack(anchor=tk.W)
 
         # Scan buttons
         button_frame = ttk.Frame(container)
         button_frame.pack(pady=10)
 
-        ttk.Button(button_frame, text="Security Scan", command=self._security_scan, style='Accent.TButton').pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="FRP Analysis", command=self._frp_analysis).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Export Report", command=self._export_security_report).pack(side=tk.LEFT, padx=5)
+        ttk.Button(
+            button_frame, text="Security Scan", command=self._security_scan, style="Accent.TButton"
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="FRP Analysis", command=self._frp_analysis).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(button_frame, text="Export Report", command=self._export_security_report).pack(
+            side=tk.LEFT, padx=5
+        )
 
         # Results
         results_frame = ttk.LabelFrame(container, text="Security Analysis Results", padding=10)
@@ -320,18 +376,30 @@ class SamFWToolGUI:
         chipset_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.chipset_var = tk.StringVar(value="MediaTek")
-        ttk.Radiobutton(chipset_frame, text="MediaTek (MTK)", variable=self.chipset_var, value="MediaTek").pack(anchor=tk.W)
-        ttk.Radiobutton(chipset_frame, text="Qualcomm (EDL)", variable=self.chipset_var, value="Qualcomm").pack(anchor=tk.W)
+        ttk.Radiobutton(
+            chipset_frame, text="MediaTek (MTK)", variable=self.chipset_var, value="MediaTek"
+        ).pack(anchor=tk.W)
+        ttk.Radiobutton(
+            chipset_frame, text="Qualcomm (EDL)", variable=self.chipset_var, value="Qualcomm"
+        ).pack(anchor=tk.W)
 
         # MediaTek section
         mtk_frame = ttk.LabelFrame(container, text="MediaTek Tools", padding=10)
         mtk_frame.pack(fill=tk.X, pady=(0, 10))
 
-        ttk.Label(mtk_frame, text="Scatter File:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(mtk_frame, text="Scatter File:").grid(
+            row=0, column=0, sticky=tk.W, padx=5, pady=5
+        )
         self.mtk_scatter_var = tk.StringVar()
-        ttk.Entry(mtk_frame, textvariable=self.mtk_scatter_var, width=40).grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
-        ttk.Button(mtk_frame, text="Browse...", command=lambda: self._browse_file(self.mtk_scatter_var)).grid(row=0, column=2, padx=5, pady=5)
-        ttk.Button(mtk_frame, text="Parse Scatter", command=self._parse_scatter).grid(row=0, column=3, padx=5, pady=5)
+        ttk.Entry(mtk_frame, textvariable=self.mtk_scatter_var, width=40).grid(
+            row=0, column=1, sticky=tk.W, padx=5, pady=5
+        )
+        ttk.Button(
+            mtk_frame, text="Browse...", command=lambda: self._browse_file(self.mtk_scatter_var)
+        ).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Button(mtk_frame, text="Parse Scatter", command=self._parse_scatter).grid(
+            row=0, column=3, padx=5, pady=5
+        )
 
         # Qualcomm section
         qcom_frame = ttk.LabelFrame(container, text="Qualcomm EDL Tools", padding=10)
@@ -339,8 +407,12 @@ class SamFWToolGUI:
 
         ttk.Label(qcom_frame, text="EDL Port:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
         self.edl_port_var = tk.StringVar(value="/dev/ttyUSB0")
-        ttk.Entry(qcom_frame, textvariable=self.edl_port_var, width=20).grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
-        ttk.Button(qcom_frame, text="Detect EDL", command=self._detect_edl).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Entry(qcom_frame, textvariable=self.edl_port_var, width=20).grid(
+            row=0, column=1, sticky=tk.W, padx=5, pady=5
+        )
+        ttk.Button(qcom_frame, text="Detect EDL", command=self._detect_edl).grid(
+            row=0, column=2, padx=5, pady=5
+        )
 
         # Log
         log_frame = ttk.LabelFrame(container, text="Chipset Tools Log", padding=10)
@@ -361,25 +433,43 @@ class SamFWToolGUI:
         pack_frame = ttk.LabelFrame(container, text="Pack Firmware", padding=10)
         pack_frame.pack(fill=tk.X, pady=(0, 10))
 
-        ttk.Label(pack_frame, text="Select partition files to pack into firmware:").pack(anchor=tk.W, pady=5)
+        ttk.Label(pack_frame, text="Select partition files to pack into firmware:").pack(
+            anchor=tk.W, pady=5
+        )
         ttk.Button(pack_frame, text="Select Files...", command=self._select_pack_files).pack(pady=5)
-        ttk.Button(pack_frame, text="Pack Firmware", command=self._pack_firmware, style='Accent.TButton').pack(pady=5)
+        ttk.Button(
+            pack_frame, text="Pack Firmware", command=self._pack_firmware, style="Accent.TButton"
+        ).pack(pady=5)
 
         # Firmware diff
         diff_frame = ttk.LabelFrame(container, text="Compare Firmware Versions", padding=10)
         diff_frame.pack(fill=tk.X, pady=(0, 10))
 
-        ttk.Label(diff_frame, text="Old Firmware:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(diff_frame, text="Old Firmware:").grid(
+            row=0, column=0, sticky=tk.W, padx=5, pady=5
+        )
         self.diff_old_var = tk.StringVar()
-        ttk.Entry(diff_frame, textvariable=self.diff_old_var, width=30).grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
-        ttk.Button(diff_frame, text="Browse...", command=lambda: self._browse_file(self.diff_old_var)).grid(row=0, column=2, padx=5, pady=5)
+        ttk.Entry(diff_frame, textvariable=self.diff_old_var, width=30).grid(
+            row=0, column=1, sticky=tk.W, padx=5, pady=5
+        )
+        ttk.Button(
+            diff_frame, text="Browse...", command=lambda: self._browse_file(self.diff_old_var)
+        ).grid(row=0, column=2, padx=5, pady=5)
 
-        ttk.Label(diff_frame, text="New Firmware:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(diff_frame, text="New Firmware:").grid(
+            row=1, column=0, sticky=tk.W, padx=5, pady=5
+        )
         self.diff_new_var = tk.StringVar()
-        ttk.Entry(diff_frame, textvariable=self.diff_new_var, width=30).grid(row=1, column=1, sticky=tk.W, padx=5, pady=5)
-        ttk.Button(diff_frame, text="Browse...", command=lambda: self._browse_file(self.diff_new_var)).grid(row=1, column=2, padx=5, pady=5)
+        ttk.Entry(diff_frame, textvariable=self.diff_new_var, width=30).grid(
+            row=1, column=1, sticky=tk.W, padx=5, pady=5
+        )
+        ttk.Button(
+            diff_frame, text="Browse...", command=lambda: self._browse_file(self.diff_new_var)
+        ).grid(row=1, column=2, padx=5, pady=5)
 
-        ttk.Button(diff_frame, text="Compare", command=self._compare_firmware).grid(row=2, column=1, pady=10)
+        ttk.Button(diff_frame, text="Compare", command=self._compare_firmware).grid(
+            row=2, column=1, pady=10
+        )
 
         # Results
         results_frame = ttk.LabelFrame(container, text="Results", padding=10)
@@ -396,7 +486,7 @@ class SamFWToolGUI:
         self.status_label = ttk.Label(self.status_bar, text="Ready", relief=tk.SUNKEN)
         self.status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.progress_bar = ttk.Progressbar(self.status_bar, length=200, mode='determinate')
+        self.progress_bar = ttk.Progressbar(self.status_bar, length=200, mode="determinate")
         self.progress_bar.pack(side=tk.RIGHT, padx=5, pady=2)
 
     # Helper methods
@@ -419,7 +509,7 @@ class SamFWToolGUI:
         height = self.root.winfo_height()
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
-        self.root.geometry(f'{width}x{height}+{x}+{y}')
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def _set_status(self, message):
         """Set status bar message"""
@@ -427,7 +517,7 @@ class SamFWToolGUI:
 
     def _log(self, widget, message):
         """Log message to text widget"""
-        widget.insert(tk.END, message + '\n')
+        widget.insert(tk.END, message + "\n")
         widget.see(tk.END)
 
     def _process_messages(self):
@@ -435,10 +525,10 @@ class SamFWToolGUI:
         try:
             while True:
                 msg = self.message_queue.get_nowait()
-                if msg['type'] == 'status':
-                    self._set_status(msg['text'])
-                elif msg['type'] == 'log':
-                    self._log(msg['widget'], msg['text'])
+                if msg["type"] == "status":
+                    self._set_status(msg["text"])
+                elif msg["type"] == "log":
+                    self._log(msg["widget"], msg["text"])
         except queue.Empty:
             pass
 
@@ -465,7 +555,7 @@ class SamFWToolGUI:
                 info = parser.parse()
 
                 result = f"Firmware Analysis Results\n"
-                result += "="*50 + "\n\n"
+                result += "=" * 50 + "\n\n"
                 result += f"Format: {info.format.value}\n"
                 result += f"Vendor: {info.vendor}\n"
                 result += f"Device: {info.device}\n"
@@ -473,7 +563,7 @@ class SamFWToolGUI:
                 result += f"Size: {info.size:,} bytes ({info.size/(1024*1024):.2f} MB)\n"
                 result += f"Checksum: {info.checksum}\n"
                 result += f"\nPartitions: {len(info.partitions)}\n"
-                result += "-"*50 + "\n"
+                result += "-" * 50 + "\n"
 
                 for part in info.partitions:
                     result += f"\n{part.name}:\n"
@@ -481,8 +571,8 @@ class SamFWToolGUI:
                     result += f"  Size: {part.size:,} bytes\n"
                     result += f"  Format: {part.format}\n"
 
-                self.analyze_results.delete('1.0', tk.END)
-                self.analyze_results.insert('1.0', result)
+                self.analyze_results.delete("1.0", tk.END)
+                self.analyze_results.insert("1.0", result)
                 self._set_status("Analysis complete")
 
             except Exception as e:
@@ -500,7 +590,7 @@ class SamFWToolGUI:
             devices = DeviceDetector.detect_all()
             if devices:
                 device_list = [f"{d.model} ({d.serial})" for d in devices]
-                self.device_combo['values'] = device_list
+                self.device_combo["values"] = device_list
                 self.device_combo.current(0)
                 messagebox.showinfo("Devices Found", f"Found {len(devices)} device(s)")
             else:
@@ -577,17 +667,16 @@ def main():
 
     # Configure ttk style
     style = ttk.Style()
-    style.theme_use('clam')
+    style.theme_use("clam")
 
     # Custom button style
-    style.configure('Accent.TButton',
-                   background='#2196F3',
-                   foreground='white',
-                   font=('Helvetica', 10, 'bold'))
+    style.configure(
+        "Accent.TButton", background="#2196F3", foreground="white", font=("Helvetica", 10, "bold")
+    )
 
     app = SamFWToolGUI(root)
     root.mainloop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

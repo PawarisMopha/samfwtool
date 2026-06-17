@@ -41,6 +41,7 @@ class SamFWToolError(Exception):
 
 class FirmwareError(SamFWToolError):
     """Base exception for firmware-related errors"""
+
     pass
 
 
@@ -62,11 +63,13 @@ class FirmwareExtractionError(FirmwareError):
 
 class FirmwarePackError(FirmwareError):
     """Error packing firmware files"""
+
     pass
 
 
 class DeviceError(SamFWToolError):
     """Base exception for device-related errors"""
+
     pass
 
 
@@ -96,11 +99,13 @@ class BootloaderLockedError(DeviceError):
 
 class SecurityScanError(SamFWToolError):
     """Error during security scanning"""
+
     pass
 
 
 class ValidationError(SamFWToolError):
     """Base exception for validation errors"""
+
     pass
 
 

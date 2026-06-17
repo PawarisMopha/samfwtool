@@ -7,6 +7,7 @@ injection attacks, and other security issues.
 Author: SamFWTool Team
 License: MIT
 """
+
 import os
 import re
 from pathlib import Path
@@ -92,9 +93,7 @@ def validate_path(
         try:
             p.relative_to(base_dir.resolve())
         except ValueError:
-            raise PathValidationError(
-                f"Path must be within {base_dir}", str(p)
-            )
+            raise PathValidationError(f"Path must be within {base_dir}", str(p))
 
     return p
 
@@ -171,7 +170,7 @@ def validate_partition_name(name: str) -> str:
         raise ValidationError("Partition name cannot be empty")
 
     # Allow alphanumeric, underscore, hyphen, and dot
-    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', name):
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", name):
         raise ValidationError(
             f"Invalid partition name: {name}. "
             "Only alphanumeric characters, underscore, hyphen, and dot allowed."
@@ -201,13 +200,13 @@ def sanitize_filename(filename: str) -> str:
     filename = os.path.basename(filename)
 
     # Remove null bytes and other control characters
-    filename = re.sub(r'[\x00-\x1f\x7f]', '', filename)
+    filename = re.sub(r"[\x00-\x1f\x7f]", "", filename)
 
     # Replace potentially dangerous characters
-    filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    filename = re.sub(r'[<>:"/\\|?*]', "_", filename)
 
     # Remove leading/trailing dots and spaces
-    filename = filename.strip('. ')
+    filename = filename.strip(". ")
 
     # Ensure non-empty
     if not filename:

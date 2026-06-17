@@ -3,6 +3,7 @@ Device flashing implementation
 
 THIS IS THE KILLER FEATURE - Actual device flashing to replace Odin
 """
+
 import subprocess
 import time
 from pathlib import Path
@@ -14,6 +15,7 @@ from samfwtool.flash.device import Device, DeviceMode, DeviceVendor
 
 class FlashResult(Enum):
     """Flash operation results"""
+
     SUCCESS = "success"
     FAILED = "failed"
     DEVICE_NOT_FOUND = "device_not_found"
@@ -64,7 +66,7 @@ class DeviceFlasher:
 
         if self.safety_checks:
             confirm = input(f"\n⚠️  Continue flashing {partition_name}? (yes/no): ")
-            if confirm.lower() != 'yes':
+            if confirm.lower() != "yes":
                 print("Cancelled by user")
                 return FlashResult.USER_CANCELLED
 
@@ -103,7 +105,7 @@ class DeviceFlasher:
             print(f"\n⚠️  WARNING: This will completely reflash your device!")
             print(f"⚠️  All data will be lost!")
             confirm = input(f"\nType 'I UNDERSTAND' to continue: ")
-            if confirm != 'I UNDERSTAND':
+            if confirm != "I UNDERSTAND":
                 print("Cancelled")
                 return FlashResult.USER_CANCELLED
 
@@ -135,7 +137,7 @@ class DeviceFlasher:
     def _flash_fastboot(self, partition: str, image: Path) -> FlashResult:
         """Flash via fastboot"""
         try:
-            cmd = ['fastboot', '-s', self.device.serial, 'flash', partition, str(image)]
+            cmd = ["fastboot", "-s", self.device.serial, "flash", partition, str(image)]
             print(f"   Executing: {' '.join(cmd)}")
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
@@ -163,18 +165,18 @@ class DeviceFlasher:
         try:
             # Heimdall partition name mapping
             partition_map = {
-                'boot': 'BOOT',
-                'recovery': 'RECOVERY',
-                'system': 'SYSTEM',
-                'cache': 'CACHE',
-                'userdata': 'USERDATA',
-                'modem': 'MODEM',
-                'bootloader': 'BOOTLOADER',
+                "boot": "BOOT",
+                "recovery": "RECOVERY",
+                "system": "SYSTEM",
+                "cache": "CACHE",
+                "userdata": "USERDATA",
+                "modem": "MODEM",
+                "bootloader": "BOOTLOADER",
             }
 
             heimdall_partition = partition_map.get(partition, partition.upper())
 
-            cmd = ['heimdall', 'flash', f'--{heimdall_partition}', str(image)]
+            cmd = ["heimdall", "flash", f"--{heimdall_partition}", str(image)]
             print(f"   Executing: {' '.join(cmd)}")
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
@@ -203,7 +205,7 @@ class DeviceFlasher:
 
         try:
             # For full firmware, heimdall can flash the entire TAR
-            cmd = ['heimdall', 'flash', '--pit', 'auto', '--TAR', str(firmware_path)]
+            cmd = ["heimdall", "flash", "--pit", "auto", "--TAR", str(firmware_path)]
             print(f"   Executing: {' '.join(cmd)}")
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
@@ -236,19 +238,18 @@ class DeviceFlasher:
         """Backup partition via ADB"""
         try:
             # Find partition path
-            cmd = ['adb', '-s', self.device.serial, 'shell',
-                  f'find /dev/block -name {partition}']
+            cmd = ["adb", "-s", self.device.serial, "shell", f"find /dev/block -name {partition}"]
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
 
             if result.returncode != 0 or not result.stdout.strip():
                 print(f"❌ Partition {partition} not found")
                 return False
 
-            partition_path = result.stdout.strip().split('\n')[0]
+            partition_path = result.stdout.strip().split("\n")[0]
             print(f"   Found: {partition_path}")
 
             # Pull partition
-            cmd = ['adb', '-s', self.device.serial, 'pull', partition_path, str(output)]
+            cmd = ["adb", "-s", self.device.serial, "pull", partition_path, str(output)]
             print(f"   Pulling partition...")
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
@@ -266,14 +267,17 @@ class DeviceFlasher:
 
     def _adb_reboot_bootloader(self):
         """Reboot device to bootloader via ADB"""
-        subprocess.run(['adb', '-s', self.device.serial, 'reboot', 'bootloader'],
-                      capture_output=True, timeout=10)
+        subprocess.run(
+            ["adb", "-s", self.device.serial, "reboot", "bootloader"],
+            capture_output=True,
+            timeout=10,
+        )
 
     def get_safety_warnings(self, partition: str) -> List[str]:
         """Get safety warnings for flashing a partition"""
         warnings = []
 
-        critical_partitions = ['bootloader', 'aboot', 'sbl1', 'rpm', 'tz']
+        critical_partitions = ["bootloader", "aboot", "sbl1", "rpm", "tz"]
         if partition.lower() in critical_partitions:
             warnings.append(f"⚠️  {partition} is CRITICAL - brick risk if corrupted!")
 

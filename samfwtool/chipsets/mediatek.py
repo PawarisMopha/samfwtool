@@ -4,6 +4,7 @@ Provides SP Flash Tool equivalent functionality
 
 This surpasses SP Flash Tool by being cross-platform and integrated
 """
+
 import struct
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -13,6 +14,7 @@ from enum import Enum
 
 class MTKFlashMode(Enum):
     """MTK Flash modes"""
+
     DOWNLOAD_ONLY = "download_only"
     FIRMWARE_UPGRADE = "firmware_upgrade"
     FORMAT_ALL = "format_all"
@@ -22,6 +24,7 @@ class MTKFlashMode(Enum):
 @dataclass
 class MTKPartition:
     """MediaTek partition info from scatter file"""
+
     name: str
     file_name: str
     is_download: bool
@@ -56,7 +59,7 @@ class ScatterFileParser:
         """Parse scatter file and extract partition information"""
         print(f"\n📱 Parsing MediaTek scatter file: {self.scatter_path.name}")
 
-        with open(self.scatter_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(self.scatter_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
         # Parse general info section
@@ -70,16 +73,16 @@ class ScatterFileParser:
 
     def _parse_general_info(self, content: str):
         """Parse general information section"""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         for line in lines:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
             # Look for general info like platform, chip, etc.
-            if ':' in line and not line.startswith('-'):
-                parts = line.split(':', 1)
+            if ":" in line and not line.startswith("-"):
+                parts = line.split(":", 1)
                 if len(parts) == 2:
                     key = parts[0].strip()
                     value = parts[1].strip()
@@ -88,21 +91,21 @@ class ScatterFileParser:
     def _parse_partitions(self, content: str):
         """Parse partition entries"""
         # Simplified scatter parsing - real implementation would be more robust
-        lines = content.split('\n')
+        lines = content.split("\n")
         current_partition = {}
         in_partition = False
 
         for line in lines:
             line = line.strip()
 
-            if line.startswith('- partition_index:'):
+            if line.startswith("- partition_index:"):
                 if current_partition:
                     self._create_partition(current_partition)
                 current_partition = {}
                 in_partition = True
 
-            if in_partition and ':' in line:
-                parts = line.replace('- ', '').split(':', 1)
+            if in_partition and ":" in line:
+                parts = line.replace("- ", "").split(":", 1)
                 if len(parts) == 2:
                     key = parts[0].strip()
                     value = parts[1].strip()
@@ -116,18 +119,18 @@ class ScatterFileParser:
         """Create MTKPartition from parsed data"""
         try:
             partition = MTKPartition(
-                name=data.get('partition_name', 'unknown'),
-                file_name=data.get('file_name', ''),
-                is_download=data.get('is_download', 'false').lower() == 'true',
-                type=data.get('type', 'NORMAL_ROM'),
-                linear_start_addr=self._parse_hex(data.get('linear_start_addr', '0x0')),
-                physical_start_addr=self._parse_hex(data.get('physical_start_addr', '0x0')),
-                partition_size=self._parse_hex(data.get('partition_size', '0x0')),
-                region=data.get('region', 'EMMC_USER'),
-                storage=data.get('storage', 'HW_STORAGE_EMMC'),
-                boundary_check=data.get('boundary_check', 'true').lower() == 'true',
-                is_reserved=data.get('is_reserved', 'false').lower() == 'true',
-                operation_type=data.get('operation_type', 'UPDATE')
+                name=data.get("partition_name", "unknown"),
+                file_name=data.get("file_name", ""),
+                is_download=data.get("is_download", "false").lower() == "true",
+                type=data.get("type", "NORMAL_ROM"),
+                linear_start_addr=self._parse_hex(data.get("linear_start_addr", "0x0")),
+                physical_start_addr=self._parse_hex(data.get("physical_start_addr", "0x0")),
+                partition_size=self._parse_hex(data.get("partition_size", "0x0")),
+                region=data.get("region", "EMMC_USER"),
+                storage=data.get("storage", "HW_STORAGE_EMMC"),
+                boundary_check=data.get("boundary_check", "true").lower() == "true",
+                is_reserved=data.get("is_reserved", "false").lower() == "true",
+                operation_type=data.get("operation_type", "UPDATE"),
             )
             self.partitions.append(partition)
         except Exception as e:
@@ -136,25 +139,25 @@ class ScatterFileParser:
     def _parse_hex(self, value: str) -> int:
         """Parse hexadecimal value"""
         try:
-            return int(value, 16) if value.startswith('0x') else int(value)
+            return int(value, 16) if value.startswith("0x") else int(value)
         except (ValueError, TypeError, AttributeError) as e:
             # Return 0 if value can't be parsed
             return 0
 
     def print_info(self):
         """Print scatter file information"""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("MEDIATEK SCATTER FILE INFORMATION")
-        print("="*70)
+        print("=" * 70)
 
         print("\nGeneral Info:")
         for key, value in self.general_info.items():
             print(f"  {key}: {value}")
 
         print(f"\nPartitions ({len(self.partitions)}):")
-        print("-"*70)
+        print("-" * 70)
         print(f"{'Name':<20} {'Download':<10} {'Start':<12} {'Size':<12}")
-        print("-"*70)
+        print("-" * 70)
 
         for part in self.partitions:
             download = "✓" if part.is_download else "✗"
@@ -228,7 +231,7 @@ class MTKFlasher:
         print("  3. Device connected to specified port")
 
         confirm = input("\nContinue? (yes/no): ")
-        if confirm.lower() != 'yes':
+        if confirm.lower() != "yes":
             print("Cancelled by user")
             return False
 
@@ -244,7 +247,7 @@ class MTKFlasher:
 
     def validate_firmware_compatibility(self, device_chip: str) -> bool:
         """Validate firmware compatibility with device chipset"""
-        scatter_chip = self.parser.general_info.get('platform', '')
+        scatter_chip = self.parser.general_info.get("platform", "")
 
         if scatter_chip and device_chip:
             if scatter_chip.lower() not in device_chip.lower():
@@ -264,33 +267,33 @@ class MTKChipDetector:
     """
 
     MTK_CHIPS = {
-        'MT6580': {'cores': 4, 'arch': 'Cortex-A7', 'process': '28nm'},
-        'MT6737': {'cores': 4, 'arch': 'Cortex-A53', 'process': '28nm'},
-        'MT6750': {'cores': 8, 'arch': 'Cortex-A53', 'process': '28nm'},
-        'MT6755': {'cores': 8, 'arch': 'Cortex-A53', 'process': '28nm'},
-        'MT6763': {'cores': 8, 'arch': 'Cortex-A53', 'process': '16nm'},
-        'MT6765': {'cores': 8, 'arch': 'Cortex-A53', 'process': '12nm'},
-        'MT6768': {'cores': 8, 'arch': 'Cortex-A55', 'process': '12nm'},
-        'MT6771': {'cores': 8, 'arch': 'Cortex-A73', 'process': '12nm'},
-        'MT6785': {'cores': 8, 'arch': 'Cortex-A76', 'process': '7nm'},
-        'MT6853': {'cores': 8, 'arch': 'Cortex-A76', 'process': '7nm'},
-        'MT6873': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'MT6877': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'MT6883': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'MT6889': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'MT6891': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'MT6893': {'cores': 8, 'arch': 'Cortex-X1', 'process': '6nm'},
-        'Dimensity 700': {'cores': 8, 'arch': 'Cortex-A76', 'process': '7nm'},
-        'Dimensity 720': {'cores': 8, 'arch': 'Cortex-A76', 'process': '7nm'},
-        'Dimensity 800': {'cores': 8, 'arch': 'Cortex-A76', 'process': '7nm'},
-        'Dimensity 820': {'cores': 8, 'arch': 'Cortex-A76', 'process': '7nm'},
-        'Dimensity 900': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'Dimensity 920': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'Dimensity 1000': {'cores': 8, 'arch': 'Cortex-A77', 'process': '7nm'},
-        'Dimensity 1100': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'Dimensity 1200': {'cores': 8, 'arch': 'Cortex-A78', 'process': '6nm'},
-        'Dimensity 8000': {'cores': 8, 'arch': 'Cortex-A78', 'process': '5nm'},
-        'Dimensity 9000': {'cores': 8, 'arch': 'Cortex-X2', 'process': '4nm'},
+        "MT6580": {"cores": 4, "arch": "Cortex-A7", "process": "28nm"},
+        "MT6737": {"cores": 4, "arch": "Cortex-A53", "process": "28nm"},
+        "MT6750": {"cores": 8, "arch": "Cortex-A53", "process": "28nm"},
+        "MT6755": {"cores": 8, "arch": "Cortex-A53", "process": "28nm"},
+        "MT6763": {"cores": 8, "arch": "Cortex-A53", "process": "16nm"},
+        "MT6765": {"cores": 8, "arch": "Cortex-A53", "process": "12nm"},
+        "MT6768": {"cores": 8, "arch": "Cortex-A55", "process": "12nm"},
+        "MT6771": {"cores": 8, "arch": "Cortex-A73", "process": "12nm"},
+        "MT6785": {"cores": 8, "arch": "Cortex-A76", "process": "7nm"},
+        "MT6853": {"cores": 8, "arch": "Cortex-A76", "process": "7nm"},
+        "MT6873": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "MT6877": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "MT6883": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "MT6889": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "MT6891": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "MT6893": {"cores": 8, "arch": "Cortex-X1", "process": "6nm"},
+        "Dimensity 700": {"cores": 8, "arch": "Cortex-A76", "process": "7nm"},
+        "Dimensity 720": {"cores": 8, "arch": "Cortex-A76", "process": "7nm"},
+        "Dimensity 800": {"cores": 8, "arch": "Cortex-A76", "process": "7nm"},
+        "Dimensity 820": {"cores": 8, "arch": "Cortex-A76", "process": "7nm"},
+        "Dimensity 900": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "Dimensity 920": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "Dimensity 1000": {"cores": 8, "arch": "Cortex-A77", "process": "7nm"},
+        "Dimensity 1100": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "Dimensity 1200": {"cores": 8, "arch": "Cortex-A78", "process": "6nm"},
+        "Dimensity 8000": {"cores": 8, "arch": "Cortex-A78", "process": "5nm"},
+        "Dimensity 9000": {"cores": 8, "arch": "Cortex-X2", "process": "4nm"},
     }
 
     @classmethod
@@ -299,8 +302,8 @@ class MTKChipDetector:
         parser = ScatterFileParser(scatter_file)
         parser.parse()
 
-        platform = parser.general_info.get('platform', '')
-        chip_name = parser.general_info.get('chip_name', '')
+        platform = parser.general_info.get("platform", "")
+        chip_name = parser.general_info.get("chip_name", "")
 
         return platform or chip_name
 
@@ -309,7 +312,7 @@ class MTKChipDetector:
         """Get detailed chip information"""
         for chip, info in cls.MTK_CHIPS.items():
             if chip.lower() in chip_model.lower():
-                return {'model': chip, **info}
+                return {"model": chip, **info}
         return None
 
     @classmethod

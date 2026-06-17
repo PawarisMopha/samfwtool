@@ -5,6 +5,7 @@ Advanced feature not in Odin
 Author: SamFWTool Team
 License: MIT
 """
+
 import struct
 from pathlib import Path
 from typing import Optional, Tuple
@@ -19,6 +20,7 @@ __all__ = [
 @dataclass
 class BootImageInfo:
     """Boot image information"""
+
     kernel_size: int
     kernel_addr: int
     ramdisk_size: int
@@ -40,7 +42,7 @@ class BootImageTool:
     Handles ANDROID! boot image format
     """
 
-    BOOT_MAGIC = b'ANDROID!'
+    BOOT_MAGIC = b"ANDROID!"
     BOOT_MAGIC_SIZE = 8
     BOOT_NAME_SIZE = 16
     BOOT_ARGS_SIZE = 512
@@ -52,27 +54,27 @@ class BootImageTool:
 
     def parse(self) -> BootImageInfo:
         """Parse boot image header"""
-        with open(self.boot_image_path, 'rb') as f:
+        with open(self.boot_image_path, "rb") as f:
             # Read header
             magic = f.read(8)
             if magic != self.BOOT_MAGIC:
                 raise ValueError(f"Invalid boot image magic: {magic}")
 
-            kernel_size = struct.unpack('<I', f.read(4))[0]
-            kernel_addr = struct.unpack('<I', f.read(4))[0]
-            ramdisk_size = struct.unpack('<I', f.read(4))[0]
-            ramdisk_addr = struct.unpack('<I', f.read(4))[0]
-            second_size = struct.unpack('<I', f.read(4))[0]
-            second_addr = struct.unpack('<I', f.read(4))[0]
-            tags_addr = struct.unpack('<I', f.read(4))[0]
-            page_size = struct.unpack('<I', f.read(4))[0]
+            kernel_size = struct.unpack("<I", f.read(4))[0]
+            kernel_addr = struct.unpack("<I", f.read(4))[0]
+            ramdisk_size = struct.unpack("<I", f.read(4))[0]
+            ramdisk_addr = struct.unpack("<I", f.read(4))[0]
+            second_size = struct.unpack("<I", f.read(4))[0]
+            second_addr = struct.unpack("<I", f.read(4))[0]
+            tags_addr = struct.unpack("<I", f.read(4))[0]
+            page_size = struct.unpack("<I", f.read(4))[0]
 
             # Header version and OS version (combined in one field)
-            dt_size = struct.unpack('<I', f.read(4))[0]
-            os_version = struct.unpack('<I', f.read(4))[0]
+            dt_size = struct.unpack("<I", f.read(4))[0]
+            os_version = struct.unpack("<I", f.read(4))[0]
 
-            name = f.read(self.BOOT_NAME_SIZE).rstrip(b'\x00').decode('ascii', errors='ignore')
-            cmdline = f.read(self.BOOT_ARGS_SIZE).rstrip(b'\x00').decode('ascii', errors='ignore')
+            name = f.read(self.BOOT_NAME_SIZE).rstrip(b"\x00").decode("ascii", errors="ignore")
+            cmdline = f.read(self.BOOT_ARGS_SIZE).rstrip(b"\x00").decode("ascii", errors="ignore")
             id = f.read(32)  # SHA-1 hash
 
             self.info = BootImageInfo(
@@ -87,7 +89,7 @@ class BootImageTool:
                 os_version=os_version,
                 name=name,
                 cmdline=cmdline,
-                id=id
+                id=id,
             )
 
             return self.info
@@ -97,12 +99,12 @@ class BootImageTool:
         if not self.info:
             self.parse()
 
-        with open(self.boot_image_path, 'rb') as f:
+        with open(self.boot_image_path, "rb") as f:
             # Skip to kernel (after page-aligned header)
             f.seek(self.info.page_size)
             kernel_data = f.read(self.info.kernel_size)
 
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             f.write(kernel_data)
 
         print(f"Kernel extracted to: {output_path} ({self.info.kernel_size} bytes)")
@@ -113,13 +115,13 @@ class BootImageTool:
         if not self.info:
             self.parse()
 
-        with open(self.boot_image_path, 'rb') as f:
+        with open(self.boot_image_path, "rb") as f:
             # Skip to ramdisk
             kernel_pages = (self.info.kernel_size + self.info.page_size - 1) // self.info.page_size
             f.seek(self.info.page_size * (1 + kernel_pages))
             ramdisk_data = f.read(self.info.ramdisk_size)
 
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             f.write(ramdisk_data)
 
         print(f"Ramdisk extracted to: {output_path} ({self.info.ramdisk_size} bytes)")
@@ -130,13 +132,15 @@ class BootImageTool:
         if not self.info:
             self.parse()
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("BOOT IMAGE INFORMATION")
-        print("="*70)
+        print("=" * 70)
         print(f"\nName: {self.info.name}")
         print(f"Kernel Size: {self.info.kernel_size} bytes ({self.info.kernel_size/1024:.2f} KB)")
         print(f"Kernel Address: 0x{self.info.kernel_addr:08x}")
-        print(f"Ramdisk Size: {self.info.ramdisk_size} bytes ({self.info.ramdisk_size/1024:.2f} KB)")
+        print(
+            f"Ramdisk Size: {self.info.ramdisk_size} bytes ({self.info.ramdisk_size/1024:.2f} KB)"
+        )
         print(f"Ramdisk Address: 0x{self.info.ramdisk_addr:08x}")
         print(f"Page Size: {self.info.page_size} bytes")
         print(f"Tags Address: 0x{self.info.tags_addr:08x}")

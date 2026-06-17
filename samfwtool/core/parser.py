@@ -5,6 +5,7 @@ Significantly surpasses Odin's limited TAR support
 Author: SamFWTool Team
 License: MIT
 """
+
 import os
 import tarfile
 import zipfile
@@ -26,6 +27,7 @@ __all__ = [
 
 class FirmwareFormat(Enum):
     """Supported firmware formats"""
+
     TAR = "tar"
     TAR_MD5 = "tar.md5"
     ZIP = "zip"
@@ -40,6 +42,7 @@ class FirmwareFormat(Enum):
 @dataclass
 class PartitionInfo:
     """Information about a firmware partition"""
+
     name: str
     offset: int
     size: int
@@ -52,6 +55,7 @@ class PartitionInfo:
 @dataclass
 class FirmwareInfo:
     """Comprehensive firmware information"""
+
     format: FirmwareFormat
     size: int
     checksum: str
@@ -83,13 +87,13 @@ class FirmwareParser:
     """
 
     MAGIC_NUMBERS = {
-        b'\x1f\x8b': 'gzip',
-        b'\x42\x5a': 'bzip2',
-        b'\xfd\x37\x7a\x58\x5a': 'xz',
-        b'\x04\x22\x4d\x18': 'lz4',
-        b'\x3a\xff\x26\xed': 'sparse',
-        b'ANDROID!': 'boot_img',
-        b'AVB0': 'avb',
+        b"\x1f\x8b": "gzip",
+        b"\x42\x5a": "bzip2",
+        b"\xfd\x37\x7a\x58\x5a": "xz",
+        b"\x04\x22\x4d\x18": "lz4",
+        b"\x3a\xff\x26\xed": "sparse",
+        b"ANDROID!": "boot_img",
+        b"AVB0": "avb",
     }
 
     def __init__(self, firmware_path: str):
@@ -106,37 +110,39 @@ class FirmwareParser:
             raise FileNotFoundError(f"Firmware file not found: {self.firmware_path}")
 
         # Check extension
-        if self.firmware_path.suffix == '.md5' or str(self.firmware_path).endswith('.tar.md5'):
+        if self.firmware_path.suffix == ".md5" or str(self.firmware_path).endswith(".tar.md5"):
             self.format = FirmwareFormat.TAR_MD5
             return self.format
-        elif self.firmware_path.suffix == '.tar':
+        elif self.firmware_path.suffix == ".tar":
             self.format = FirmwareFormat.TAR
             return self.format
-        elif self.firmware_path.suffix == '.zip':
+        elif self.firmware_path.suffix == ".zip":
             self.format = FirmwareFormat.ZIP
             return self.format
-        elif self.firmware_path.suffix in ['.img', '.bin']:
+        elif self.firmware_path.suffix in [".img", ".bin"]:
             # Need to check magic number for img/bin
-            with open(self.firmware_path, 'rb') as f:
+            with open(self.firmware_path, "rb") as f:
                 magic_bytes = f.read(8)
                 for magic, fmt in self.MAGIC_NUMBERS.items():
                     if magic_bytes.startswith(magic):
-                        if fmt == 'sparse':
+                        if fmt == "sparse":
                             self.format = FirmwareFormat.SPARSE
-                        elif fmt == 'boot_img':
+                        elif fmt == "boot_img":
                             self.format = FirmwareFormat.IMG
                         else:
                             self.format = FirmwareFormat.BIN
                         return self.format
-            self.format = FirmwareFormat.IMG if self.firmware_path.suffix == '.img' else FirmwareFormat.BIN
+            self.format = (
+                FirmwareFormat.IMG if self.firmware_path.suffix == ".img" else FirmwareFormat.BIN
+            )
             return self.format
 
         # Fall back to magic number detection
         try:
             file_type = magic.from_file(str(self.firmware_path))
-            if 'tar' in file_type.lower():
+            if "tar" in file_type.lower():
                 self.format = FirmwareFormat.TAR
-            elif 'zip' in file_type.lower():
+            elif "zip" in file_type.lower():
                 self.format = FirmwareFormat.ZIP
             else:
                 self.format = FirmwareFormat.UNKNOWN
@@ -175,7 +181,7 @@ class FirmwareParser:
 
         # Extract partition info from TAR
         tar_path = self.firmware_path
-        with tarfile.open(tar_path, 'r') as tar:
+        with tarfile.open(tar_path, "r") as tar:
             for member in tar.getmembers():
                 if member.isfile():
                     # Detect partition type from filename
@@ -189,7 +195,7 @@ class FirmwareParser:
                         type=part_type,
                         format=part_format,
                         checksum=None,  # Calculate if needed
-                        compression=self._detect_compression(tar, member)
+                        compression=self._detect_compression(tar, member),
                     )
                     partitions.append(partition)
 
@@ -204,7 +210,7 @@ class FirmwareParser:
             vendor=vendor,
             device=device,
             version=version,
-            metadata={}
+            metadata={},
         )
 
         self.info = info
@@ -219,7 +225,7 @@ class FirmwareParser:
         partitions = []
         metadata = {}
 
-        with zipfile.ZipFile(self.firmware_path, 'r') as zf:
+        with zipfile.ZipFile(self.firmware_path, "r") as zf:
             # Look for common firmware files
             for info in zf.filelist:
                 if not info.is_dir():
@@ -232,17 +238,17 @@ class FirmwareParser:
                         type=part_type,
                         format=self._detect_format_from_name(info.filename),
                         checksum=hex(info.CRC),
-                        compression='deflate' if info.compress_type != 0 else None
+                        compression="deflate" if info.compress_type != 0 else None,
                     )
                     partitions.append(partition)
 
             # Extract OTA metadata if present
-            if 'META-INF/com/android/metadata' in zf.namelist():
-                with zf.open('META-INF/com/android/metadata') as f:
+            if "META-INF/com/android/metadata" in zf.namelist():
+                with zf.open("META-INF/com/android/metadata") as f:
                     for line in f:
-                        line = line.decode('utf-8').strip()
-                        if '=' in line:
-                            key, value = line.split('=', 1)
+                        line = line.decode("utf-8").strip()
+                        if "=" in line:
+                            key, value = line.split("=", 1)
                             metadata[key] = value
 
         vendor, device, version = self._parse_filename_metadata()
@@ -255,8 +261,8 @@ class FirmwareParser:
             vendor=vendor,
             device=device,
             version=version,
-            security_patch=metadata.get('security-patch'),
-            metadata=metadata
+            security_patch=metadata.get("security-patch"),
+            metadata=metadata,
         )
 
         self.info = info
@@ -267,12 +273,12 @@ class FirmwareParser:
         partitions = []
 
         # Detect image type from header
-        with open(self.firmware_path, 'rb') as f:
+        with open(self.firmware_path, "rb") as f:
             header = f.read(8)
 
             # Check for Android boot image
-            if header.startswith(b'ANDROID!'):
-                part_type = 'boot'
+            if header.startswith(b"ANDROID!"):
+                part_type = "boot"
             else:
                 part_type = self._detect_partition_type(self.firmware_path.name)
 
@@ -281,8 +287,8 @@ class FirmwareParser:
             offset=0,
             size=self.firmware_path.stat().st_size,
             type=part_type,
-            format='img',
-            checksum=self._calculate_md5()
+            format="img",
+            checksum=self._calculate_md5(),
         )
         partitions.append(partition)
 
@@ -295,7 +301,7 @@ class FirmwareParser:
             partitions=partitions,
             vendor=vendor,
             device=device,
-            version=version
+            version=version,
         )
 
         self.info = info
@@ -304,19 +310,19 @@ class FirmwareParser:
     def _parse_sparse(self) -> FirmwareInfo:
         """Parse Android sparse image format"""
         # Sparse image header structure
-        with open(self.firmware_path, 'rb') as f:
-            magic = struct.unpack('<I', f.read(4))[0]
-            if magic != 0xed26ff3a:
+        with open(self.firmware_path, "rb") as f:
+            magic = struct.unpack("<I", f.read(4))[0]
+            if magic != 0xED26FF3A:
                 raise ValueError("Invalid sparse image magic")
 
-            major_version = struct.unpack('<H', f.read(2))[0]
-            minor_version = struct.unpack('<H', f.read(2))[0]
-            file_hdr_sz = struct.unpack('<H', f.read(2))[0]
-            chunk_hdr_sz = struct.unpack('<H', f.read(2))[0]
-            blk_sz = struct.unpack('<I', f.read(4))[0]
-            total_blks = struct.unpack('<I', f.read(4))[0]
-            total_chunks = struct.unpack('<I', f.read(4))[0]
-            image_checksum = struct.unpack('<I', f.read(4))[0]
+            major_version = struct.unpack("<H", f.read(2))[0]
+            minor_version = struct.unpack("<H", f.read(2))[0]
+            file_hdr_sz = struct.unpack("<H", f.read(2))[0]
+            chunk_hdr_sz = struct.unpack("<H", f.read(2))[0]
+            blk_sz = struct.unpack("<I", f.read(4))[0]
+            total_blks = struct.unpack("<I", f.read(4))[0]
+            total_chunks = struct.unpack("<I", f.read(4))[0]
+            image_checksum = struct.unpack("<I", f.read(4))[0]
 
         partitions = []
         partition = PartitionInfo(
@@ -324,8 +330,8 @@ class FirmwareParser:
             offset=0,
             size=total_blks * blk_sz,
             type=self._detect_partition_type(self.firmware_path.name),
-            format='sparse',
-            checksum=hex(image_checksum)
+            format="sparse",
+            checksum=hex(image_checksum),
         )
         partitions.append(partition)
 
@@ -340,10 +346,10 @@ class FirmwareParser:
             device=device,
             version=version,
             metadata={
-                'block_size': blk_sz,
-                'total_blocks': total_blks,
-                'total_chunks': total_chunks
-            }
+                "block_size": blk_sz,
+                "total_blocks": total_blks,
+                "total_chunks": total_chunks,
+            },
         )
 
         self.info = info
@@ -356,9 +362,9 @@ class FirmwareParser:
             name=self.firmware_path.name,
             offset=0,
             size=self.firmware_path.stat().st_size,
-            type='unknown',
-            format='binary',
-            checksum=self._calculate_md5()
+            type="unknown",
+            format="binary",
+            checksum=self._calculate_md5(),
         )
         partitions.append(partition)
 
@@ -371,7 +377,7 @@ class FirmwareParser:
             partitions=partitions,
             vendor=vendor,
             device=device,
-            version=version
+            version=version,
         )
 
         self.info = info
@@ -382,21 +388,21 @@ class FirmwareParser:
         filename_lower = filename.lower()
 
         partition_types = {
-            'boot': ['boot.img', 'boot.bin', 'boot_'],
-            'recovery': ['recovery.img', 'recovery.bin'],
-            'system': ['system.img', 'system_'],
-            'vendor': ['vendor.img', 'vendor_'],
-            'product': ['product.img', 'product_'],
-            'odm': ['odm.img', 'odm_'],
-            'cache': ['cache.img', 'cache_'],
-            'userdata': ['userdata.img', 'data.img'],
-            'modem': ['modem.bin', 'modem_', 'noc_'],
-            'bootloader': ['bootloader', 'aboot', 'sbl'],
-            'radio': ['radio', 'baseband'],
-            'kernel': ['kernel', 'zimage', 'image'],
-            'dtb': ['dtb', 'dt.img'],
-            'vbmeta': ['vbmeta'],
-            'super': ['super.img'],
+            "boot": ["boot.img", "boot.bin", "boot_"],
+            "recovery": ["recovery.img", "recovery.bin"],
+            "system": ["system.img", "system_"],
+            "vendor": ["vendor.img", "vendor_"],
+            "product": ["product.img", "product_"],
+            "odm": ["odm.img", "odm_"],
+            "cache": ["cache.img", "cache_"],
+            "userdata": ["userdata.img", "data.img"],
+            "modem": ["modem.bin", "modem_", "noc_"],
+            "bootloader": ["bootloader", "aboot", "sbl"],
+            "radio": ["radio", "baseband"],
+            "kernel": ["kernel", "zimage", "image"],
+            "dtb": ["dtb", "dt.img"],
+            "vbmeta": ["vbmeta"],
+            "super": ["super.img"],
         }
 
         for part_type, patterns in partition_types.items():
@@ -404,7 +410,7 @@ class FirmwareParser:
                 if pattern in filename_lower:
                     return part_type
 
-        return 'unknown'
+        return "unknown"
 
     def _detect_partition_format(self, tar: tarfile.TarFile, member: tarfile.TarInfo) -> str:
         """Detect the format of a partition within a TAR"""
@@ -421,32 +427,32 @@ class FirmwareParser:
             # If we can't read the file, assume it's raw
             pass
 
-        return 'raw'
+        return "raw"
 
     def _detect_compression(self, tar: tarfile.TarFile, member: tarfile.TarInfo) -> Optional[str]:
         """Detect compression of partition data"""
         fmt = self._detect_partition_format(tar, member)
-        if fmt in ['gzip', 'bzip2', 'xz', 'lz4']:
+        if fmt in ["gzip", "bzip2", "xz", "lz4"]:
             return fmt
         return None
 
     def _detect_format_from_name(self, filename: str) -> str:
         """Detect format from filename"""
-        if filename.endswith('.img'):
-            return 'img'
-        elif filename.endswith('.bin'):
-            return 'bin'
-        elif filename.endswith('.lz4'):
-            return 'lz4'
-        elif filename.endswith('.gz'):
-            return 'gzip'
-        return 'unknown'
+        if filename.endswith(".img"):
+            return "img"
+        elif filename.endswith(".bin"):
+            return "bin"
+        elif filename.endswith(".lz4"):
+            return "lz4"
+        elif filename.endswith(".gz"):
+            return "gzip"
+        return "unknown"
 
     def _calculate_md5(self) -> str:
         """Calculate MD5 checksum of firmware file"""
         md5 = hashlib.md5()
-        with open(self.firmware_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(self.firmware_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 md5.update(chunk)
         return md5.hexdigest()
 
@@ -455,7 +461,7 @@ class FirmwareParser:
         filename = self.firmware_path.stem
 
         # Common Samsung pattern: SM-G991B_1_20230101120000_abcdefg_fac.tar.md5
-        parts = filename.split('_')
+        parts = filename.split("_")
 
         vendor = "unknown"
         device = "unknown"
@@ -464,16 +470,16 @@ class FirmwareParser:
         if len(parts) > 0:
             # Try to detect vendor
             first_part = parts[0].upper()
-            if first_part.startswith('SM-'):
+            if first_part.startswith("SM-"):
                 vendor = "Samsung"
                 device = parts[0]
-            elif 'PIXEL' in first_part:
+            elif "PIXEL" in first_part:
                 vendor = "Google"
                 device = parts[0]
-            elif 'MI' in first_part or 'POCO' in first_part:
+            elif "MI" in first_part or "POCO" in first_part:
                 vendor = "Xiaomi"
                 device = parts[0]
-            elif 'ONE' in first_part:
+            elif "ONE" in first_part:
                 vendor = "OnePlus"
                 device = parts[0]
             else:
@@ -510,9 +516,9 @@ class FirmwareParser:
         calculated = self._calculate_md5()
 
         # Check if there's a .md5 file
-        md5_file = self.firmware_path.with_suffix('.md5')
+        md5_file = self.firmware_path.with_suffix(".md5")
         if md5_file.exists():
-            with open(md5_file, 'r') as f:
+            with open(md5_file, "r") as f:
                 expected = f.read().strip().split()[0]
                 return calculated == expected
 
